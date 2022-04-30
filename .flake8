@@ -1,0 +1,17 @@
+[flake8]
+max-line-length = 120
+max-complexity = 10
+docstring-convention=google
+
+# Excluding some directories:
+exclude =
+  .git
+  __pycache__
+  .venv
+  .eggs
+  *.egg
+
+# Ignoring some errors in some files:
+per-file-ignores =
+  # Enable `assert` keyword and magic numbers for tests:
+  tests/*.py: S101, WPS226, WPS432

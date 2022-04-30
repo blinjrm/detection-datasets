@@ -1,0 +1,28 @@
+# VSCode
+.vscode/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Unit test / coverage reports
+.coverage
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Virtual environment
+.venv/
+
+# Pytest
+.pytest_cache/
+.coverage
+
+# MacOS
+.DS_Store
+
+# Poetry
+poetry.lock
