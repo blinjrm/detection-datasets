@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from detection_dataset.bbox import Bbox
 from detection_dataset.readers import BaseReader
 
 
@@ -16,6 +17,9 @@ class CocoReader(BaseReader):
         annotation_files = Path(self.path).glob("*.json")
         annotation_dataframes = [self._json_to_dataframe(self._read_json(file)) for file in annotation_files]
         annotation_by_bbox = pd.concat(annotation_dataframes, axis=0, ignore_index=True)
+        annotation_by_bbox["bbox"] = [
+            Bbox.from_coco(row.bbox, row.width, row.height) for _, row in annotation_by_bbox.iterrows()
+        ]
 
     @staticmethod
     def _read_json(path: str) -> json:
@@ -44,5 +48,6 @@ class CocoReader(BaseReader):
                 "attributes": data["attributes"].apply(list),
                 "area": data["area"].apply(list),
                 "bbox_coco": data["bbox"].apply(list),
+                "split": data["split"].first(),
             }
         ).reset_index()
