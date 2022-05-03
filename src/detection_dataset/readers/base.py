@@ -5,7 +5,7 @@ import pandas as pd
 
 class BaseReader(ABC):
     def __init__(self, path: str) -> None:
-        """_summary_
+        """Base class for loading datasets in memory.
 
         Args:
             path: Path to the dataset

@@ -5,6 +5,7 @@ from typing import Iterable
 import pandas as pd
 
 from detection_dataset.readers import CocoReader
+from detection_dataset.writers import MmdetWriter
 
 
 class Convert:
@@ -27,3 +28,7 @@ class Convert:
     @classmethod
     def to_coco(self, name: str, splits: Iterable[float | int] | None) -> None:
         raise NotImplementedError()
+
+    @classmethod
+    def to_mmdet(self, kwargs) -> None:
+        MmdetWriter(**kwargs)
