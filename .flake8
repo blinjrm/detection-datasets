@@ -15,3 +15,4 @@ exclude =
 per-file-ignores =
   # Enable `assert` keyword and magic numbers for tests:
   tests/*.py: S101, WPS226, WPS432
+  __init__.py:F401

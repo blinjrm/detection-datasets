@@ -12,7 +12,7 @@ class BaseReader(ABC):
         """
 
         self.path = path
-        self._data = self.load()
+        self._data = self._load()
 
     @abstractmethod
     def _load(self) -> pd.DataFrame:

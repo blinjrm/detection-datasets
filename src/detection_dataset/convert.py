@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, Optional, Union
+from typing import Iterable
 
 import pandas as pd
 
@@ -13,8 +13,8 @@ class Convert:
 
     @classmethod
     def from_coco(cls, path: str) -> Convert:
-        data = CocoReader(path)
-        return Convert(data)
+        reader = CocoReader(path)
+        return Convert(reader.data)
 
     @classmethod
     def from_voc(self, path: str) -> None:
