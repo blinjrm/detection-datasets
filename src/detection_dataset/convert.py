@@ -11,6 +11,8 @@ class Convert:
     def __init__(self, dataset: Dataset) -> None:
         self.dataset = dataset
 
+        # TODO: add ability to draw image with bounding boxes
+
     @classmethod
     def from_coco(cls, path: str, splits: dict[str, tuple[str, str]]) -> Convert:
         reader = CocoReader(path, splits)

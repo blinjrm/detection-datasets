@@ -14,11 +14,10 @@ class BaseReader(ABC):
 
         self.path = path
         self.splits = splits
-        # self._data, self.categories = self._load()
-        self.dataset = self._load()
+        self._dataset = self.load()
 
     @abstractmethod
-    def _load(self) -> pd.DataFrame:
+    def load(self) -> pd.DataFrame:
         """Load a dataset.
 
         Returns:
@@ -26,11 +25,11 @@ class BaseReader(ABC):
         """
 
     @property
-    def data(self) -> pd.DataFrame:
+    def dataset(self) -> pd.DataFrame:
         """Access the class data.
 
         Returns:
             A pandas DataFrame containing the dataset.
         """
 
-        return self._data
+        return self._dataset

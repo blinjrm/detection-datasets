@@ -14,7 +14,7 @@ class CocoReader(BaseReader):
     def __init__(self, path: str, splits: dict[str, tuple[str, str]]) -> None:
         super().__init__(path, splits)
 
-    def _load(self) -> pd.DataFrame:
+    def load(self) -> pd.DataFrame:
         annotation_dataframes = []
         categories = []
         for split, (annotation_file, images_dir) in self.splits.items():
