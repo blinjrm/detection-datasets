@@ -15,20 +15,29 @@ class CocoReader(BaseReader):
 
     def _load(self) -> pd.DataFrame:
         annotation_dataframes = []
+        categories = []
         for split, (annotation_file, images_dir) in self.splits.items():
             images_path_prefix = os.path.join(self.path, images_dir)
-            annotation_dataframe = self._json_to_dataframe(self._read_json(self.path, annotation_file))
-            annotation_dataframe["image_path"] = annotation_dataframe["filename"].apply(
+
+            json = self._read_json(self.path, annotation_file)
+
+            annotation_dataframe = self._json_to_dataframe(json)
+            annotation_dataframe["image_path"] = annotation_dataframe["image_name"].apply(
                 lambda x: os.path.join(images_path_prefix, x)
             )
             annotation_dataframe["split"] = split
             annotation_dataframes.append(annotation_dataframe)
 
+            if categories == []:
+                categories = json["categories"]
+
         annotation_by_bbox = pd.concat(annotation_dataframes, axis=0, ignore_index=True)
         annotation_by_bbox["bbox"] = [
             Bbox.from_coco(row.bbox, row.width, row.height) for _, row in annotation_by_bbox.iterrows()
         ]
-        return annotation_by_bbox
+
+        categories = [category["name"] for category in categories]
+        return annotation_by_bbox, categories
 
     @staticmethod
     def _read_json(path: str, file: str) -> json:
@@ -46,7 +55,7 @@ class CocoReader(BaseReader):
         images = images.drop(
             columns=["license", "time_captured", "original_url", "isstatic", "kaggle_id"], errors="ignore"
         )
-        images = images.rename(columns={"id": "image_id", "file_name": "filename"})
+        images = images.rename(columns={"id": "image_id", "file_name": "image_name"})
 
         data = pd.merge(annotations, images, on="image_id", how="left")
         return data

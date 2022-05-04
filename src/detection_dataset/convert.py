@@ -9,13 +9,14 @@ from detection_dataset.writers import MmdetWriter
 
 
 class Convert:
-    def __init__(self, data: pd.DataFrame) -> None:
+    def __init__(self, data: pd.DataFrame, categories: list[str]) -> None:
         self.data = data
+        self.categories = categories
 
     @classmethod
     def from_coco(cls, path: str, splits: dict[str, tuple[str, str]]) -> Convert:
         reader = CocoReader(path, splits)
-        return Convert(reader.data)
+        return Convert(reader.data, reader.categories)
 
     @classmethod
     def from_voc(self, path: str) -> None:
