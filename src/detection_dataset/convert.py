@@ -13,8 +13,8 @@ class Convert:
         self.data = data
 
     @classmethod
-    def from_coco(cls, path: str) -> Convert:
-        reader = CocoReader(path)
+    def from_coco(cls, path: str, splits: dict[str, tuple[str, str]]) -> Convert:
+        reader = CocoReader(path, splits)
         return Convert(reader.data)
 
     @classmethod

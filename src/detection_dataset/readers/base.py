@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
+from typing import Dict, Tuple
 
 import pandas as pd
 
 
 class BaseReader(ABC):
-    def __init__(self, path: str) -> None:
+    def __init__(self, path: str, splits: Dict[str, Tuple[str, str]]) -> None:
         """Base class for loading datasets in memory.
 
         Args:
@@ -12,6 +13,7 @@ class BaseReader(ABC):
         """
 
         self.path = path
+        self.splits = splits
         self._data = self._load()
 
     @abstractmethod
