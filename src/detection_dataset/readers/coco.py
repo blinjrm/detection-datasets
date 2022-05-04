@@ -6,6 +6,7 @@ import os
 import pandas as pd
 
 from detection_dataset.bbox import Bbox
+from detection_dataset.models import Dataset
 from detection_dataset.readers import BaseReader
 
 
@@ -37,7 +38,7 @@ class CocoReader(BaseReader):
         ]
 
         categories = [category["name"] for category in categories]
-        return annotation_by_bbox, categories
+        return Dataset(data=annotation_by_bbox, categories=categories)
 
     @staticmethod
     def _read_json(path: str, file: str) -> json:

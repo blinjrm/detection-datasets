@@ -1,9 +1,10 @@
+from dataclasses import dataclass
 from typing import List
 
-from pydantic import BaseModel
+import pandas as pd
 
 
-class BboxData(BaseModel):
-    bbox: List[float]
-    width: float
-    height: float
+@dataclass
+class Dataset:
+    data: pd.DataFrame
+    categories: List[str]

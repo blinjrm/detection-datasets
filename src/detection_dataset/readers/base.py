@@ -14,7 +14,8 @@ class BaseReader(ABC):
 
         self.path = path
         self.splits = splits
-        self._data, self.categories = self._load()
+        # self._data, self.categories = self._load()
+        self.dataset = self._load()
 
     @abstractmethod
     def _load(self) -> pd.DataFrame:
