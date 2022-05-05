@@ -4,7 +4,7 @@ from typing import Iterable
 
 from detection_dataset.models import Dataset
 from detection_dataset.readers import CocoReader
-from detection_dataset.writers import MmdetWriter
+from detection_dataset.writers import MmdetWriter, YoloWriter
 
 
 class Convert:
@@ -33,3 +33,7 @@ class Convert:
     @classmethod
     def to_mmdet(self, kwargs) -> None:
         MmdetWriter(**kwargs)
+
+    @classmethod
+    def to_yolo(self, kwargs) -> None:
+        YoloWriter(**kwargs)

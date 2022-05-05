@@ -4,7 +4,6 @@ import shutil
 import numpy as np
 import pandas as pd
 
-from detection_dataset.bbox import Bbox
 from detection_dataset.writers import BaseWriter
 
 
@@ -12,11 +11,11 @@ class MmdetWriter(BaseWriter):
     def __init__(self, data: pd.DataFrame, path: str, name: str) -> None:
         super().__init__(data, path, name)
 
-        self._write()
+        # self.data["bbox"] = [Bbox.to_mmdet(row.bbox, row.width, row.height) for _, row in self.data.iterrows()]
 
-        self.data["bbox"] = [Bbox.to_mmdet(row.bbox, row.width, row.height) for _, row in self.data.iterrows()]
+        self.write()
 
-    def _write(self) -> None:
+    def write(self) -> None:
         data = self._data_by_image()
 
         os.makedirs(os.path.join(self.path, self.name))

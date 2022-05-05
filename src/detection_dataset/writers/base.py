@@ -20,7 +20,7 @@ class BaseWriter(ABC):
         self.labels_mapping = labels_mapping
 
     @abstractmethod
-    def _write(self) -> pd.DataFrame:
+    def write(self) -> pd.DataFrame:
         """Writes the dataset to disk."""
 
     def _data_by_image(self) -> pd.DataFrame:
