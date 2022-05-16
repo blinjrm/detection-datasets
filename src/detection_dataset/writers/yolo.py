@@ -28,7 +28,10 @@ class YoloWriter(BaseWriter):
         self.write()
 
     def write(self) -> None:
-        pass
+        self._make_dirs()
+        self._write_yaml()
+        self._write_images()
+        self._write_labels()
 
     def _make_dirs(self) -> None:
         path = os.path.join(self.path, self.name)
@@ -52,3 +55,9 @@ class YoloWriter(BaseWriter):
 
         with open(os.path.join(self.path, "dataset.yml"), "w") as outfile:
             yaml.dump(yaml_dataset, outfile)
+
+    def _write_images(self) -> None:
+        pass
+
+    def _write_labels(self) -> None:
+        pass

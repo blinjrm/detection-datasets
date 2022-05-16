@@ -26,14 +26,11 @@ class Convert:
     def from_yolo(self, path: str) -> None:
         raise NotImplementedError()
 
-    @classmethod
     def to_coco(self, name: str, splits: Iterable[float | int] | None) -> None:
         raise NotImplementedError()
 
-    @classmethod
     def to_mmdet(self, kwargs) -> None:
         MmdetWriter(**kwargs)
 
-    @classmethod
     def to_yolo(self, kwargs) -> None:
         YoloWriter(**kwargs)
