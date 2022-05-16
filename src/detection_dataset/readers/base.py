@@ -3,6 +3,8 @@ from typing import Dict, Tuple
 
 import pandas as pd
 
+from detection_dataset.utils import Dataset
+
 
 class BaseReader(ABC):
     def __init__(self, path: str, splits: Dict[str, Tuple[str, str]]) -> None:
@@ -14,7 +16,8 @@ class BaseReader(ABC):
 
         self.path = path
         self.splits = splits
-        self._dataset = self.load()
+        self._dataset = Dataset()
+        self.load()
 
     @abstractmethod
     def load(self) -> pd.DataFrame:

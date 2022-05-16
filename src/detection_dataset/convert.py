@@ -1,36 +1,15 @@
-from __future__ import annotations
-
-from typing import Iterable
-
-from detection_dataset.models import Dataset
-from detection_dataset.readers import CocoReader
-from detection_dataset.writers import MmdetWriter, YoloWriter
+from detection_dataset.utils import Dataset, reader_factory, writer_factory
 
 
-class Convert:
-    def __init__(self, dataset: Dataset) -> None:
-        self.dataset = dataset
+class Converter:
+    def __init__(self) -> None:
+        self.dataset = Dataset()
 
-        # TODO: add ability to draw image with bounding boxes
+    def read(self, dataset_format: str, **kwargs) -> None:
+        reader = reader_factory.get(dataset_format, **kwargs)
+        dataset = reader.load()
+        self.dataset.concat(dataset)
 
-    @classmethod
-    def from_coco(cls, path: str, splits: dict[str, tuple[str, str]]) -> Convert:
-        reader = CocoReader(path, splits)
-        return Convert(reader.dataset)
-
-    @classmethod
-    def from_voc(self, path: str) -> None:
-        raise NotImplementedError()
-
-    @classmethod
-    def from_yolo(self, path: str) -> None:
-        raise NotImplementedError()
-
-    def to_coco(self, name: str, splits: Iterable[float | int] | None) -> None:
-        raise NotImplementedError()
-
-    def to_mmdet(self, kwargs) -> None:
-        MmdetWriter(**kwargs)
-
-    def to_yolo(self, kwargs) -> None:
-        YoloWriter(**kwargs)
+    def write(self, dataset_format: str, **kwargs) -> None:
+        writer = writer_factory.get(dataset_format, **kwargs)
+        writer.write(self.dataset)
