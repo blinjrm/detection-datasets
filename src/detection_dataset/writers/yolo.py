@@ -20,18 +20,22 @@ names: [{class_names}]
 
 
 class YoloWriter(BaseWriter):
-    def __init__(self, data: pd.DataFrame, path: str, name: str) -> None:
-        super().__init__(data, path, name)
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
 
-        # self.data["bbox"] = [Bbox.to_mmdet(row.bbox, row.width, row.height) for _, row in self.data.iterrows()]
-
+        self.final_data["bbox"] = [bbox.to_yolo() for bbox in self.data.bbox]
         self.write()
 
     def write(self) -> None:
+
+        data = self._data_by_image()
+
         self._make_dirs()
         self._write_yaml()
-        self._write_images()
-        self._write_labels()
+
+        for _, row in data.iterrows():
+            self._write_image(row)
+            self._write_label(row)
 
     def _make_dirs(self) -> None:
         path = os.path.join(self.path, self.name)
@@ -56,8 +60,8 @@ class YoloWriter(BaseWriter):
         with open(os.path.join(self.path, "dataset.yml"), "w") as outfile:
             yaml.dump(yaml_dataset, outfile)
 
-    def _write_images(self) -> None:
+    def _write_image(self, row: pd.DataFrame) -> None:
         pass
 
-    def _write_labels(self) -> None:
+    def _write_label(self, row: pd.DataFrame) -> None:
         pass

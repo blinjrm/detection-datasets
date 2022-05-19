@@ -11,5 +11,6 @@ class Converter:
         self.dataset.concat(dataset)
 
     def write(self, dataset_format: str, **kwargs) -> None:
+        kwargs["data"] = self.dataset
         writer = writer_factory.get(dataset_format, **kwargs)
         writer.write(self.dataset)
