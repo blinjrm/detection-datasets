@@ -13,7 +13,7 @@ class Factory:
 
     def get(self, dataset_format: str, **kwargs) -> Union[BaseReader, BaseWriter]:
         try:
-            worker = self._workers.get(dataset_format.lower())
+            worker = self._workers[dataset_format.lower()]
         except KeyError:
             raise KeyError(f"{dataset_format} is not registered")
 

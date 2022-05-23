@@ -9,9 +9,9 @@ yaml = YAML()
 
 YAML_TEMPLATE = """
 path: {path}
-train: images/train  # train images (relative to 'path')
-val: images/val  # val images (relative to 'path')
-test:  images/test  # test images (relative to 'path')
+train: images/train
+val: images/val
+test:  images/test
 
 # Classes
 nc: {n_classes}
@@ -23,45 +23,52 @@ class YoloWriter(BaseWriter):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
-        self.final_data["bbox"] = [bbox.to_yolo() for bbox in self.data.bbox]
+        self.final_data["bbox"] = [bbox.to_yolo() for bbox in self.final_data.bbox]
         self.write()
 
     def write(self) -> None:
 
         data = self._data_by_image()
 
-        self._make_dirs()
         self._write_yaml()
 
-        for _, row in data.iterrows():
-            self._write_image(row)
-            self._write_label(row)
+        for split in data.split.unique():
+            split_data = data[data.split == split]
 
-    def _make_dirs(self) -> None:
-        path = os.path.join(self.path, self.name)
-        os.makedirs(path)
-        os.makedir(os.path.join(path, "images", "train"))
-        os.makedir(os.path.join(path, "images", "val"))
-        os.makedir(os.path.join(path, "images", "test"))
-        os.makedir(os.path.join(path, "labels", "train"))
-        os.makedir(os.path.join(path, "labels", "val"))
-        os.makedir(os.path.join(path, "labels", "test"))
+            self._make_dirs(split)
+
+            for _, row in split_data.iterrows():
+                self._write_image(row)
+                self._write_label(row)
 
     def _write_yaml(self) -> None:
 
+        os.makedirs(self.dataset_dir)
+
         yaml_template_formated = YAML_TEMPLATE.format(
-            path=self.path,
+            path=self.dataset_dir,
             n_classes=self.n_classes,
             class_names=", ".join(self.class_names),
         )
 
         yaml_dataset = yaml.load(yaml_template_formated)
 
-        with open(os.path.join(self.path, "dataset.yml"), "w") as outfile:
+        with open(os.path.join(self.dataset_dir, "dataset.yml"), "w") as outfile:
             yaml.dump(yaml_dataset, outfile)
+
+    def _make_dirs(self, split: str) -> None:
+        os.makedirs(os.path.join(self.dataset_dir, "images", split))
+        os.makedirs(os.path.join(self.dataset_dir, "labels", split))
 
     def _write_image(self, row: pd.DataFrame) -> None:
         pass
 
-    def _write_label(self, row: pd.DataFrame) -> None:
-        pass
+    def _write_label(self, row: pd.Series) -> None:
+        split = row.split
+        row = row.to_frame().T
+        data = row.explode(["category_id", "area", "bbox"])
+
+        with open(os.path.join(self.dataset_dir, "labels", split, str(row.image_id.value) + ".txt"), "w") as outfile:
+            for _, r in data.iterrows():
+                labels = " ".join((str(r.category_id), str(r.bbox[0]), str(r.bbox[1]), str(r.bbox[2]), str(r.bbox[3])))
+                outfile.write(labels + "\n")
