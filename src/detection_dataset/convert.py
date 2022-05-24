@@ -6,11 +6,11 @@ class Converter:
         self.dataset = Dataset()
 
     def read(self, dataset_format: str, **kwargs) -> None:
-        reader = reader_factory.get(dataset_format, **kwargs)
-        dataset = reader.load()
+        self.reader = reader_factory.get(dataset_format, **kwargs)
+        dataset = self.reader.load()
         self.dataset.concat(dataset)
 
     def write(self, dataset_format: str, **kwargs) -> None:
         kwargs["dataset"] = self.dataset
-        writer = writer_factory.get(dataset_format, **kwargs)
-        writer.write()
+        self.writer = writer_factory.get(dataset_format, **kwargs)
+        self.writer.write()

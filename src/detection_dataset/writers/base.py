@@ -63,17 +63,20 @@ class BaseWriter(ABC):
 
             # Taken from
             # https://stackoverflow.com/questions/38250710/how-to-split-data-into-3-sets-train-validation-and-test
-            data_train, data_val, data_test = np.split(
-                data, [int(self.splits[0] * len(data)), int(self.splits[1] * len(data))]
-            )
+            n_train = int(self.splits[0] * len(data))
+            n_val = int((self.splits[0] + self.splits[1]) * len(data))
+            data_train, data_val, data_test = np.split(data, [n_train, n_val])
+            data_train["split"] = Split.train.value
+            data_val["split"] = Split.val.value
+            data_test["split"] = Split.test.value
 
         elif all([isinstance(x, int) for x in self.splits]):
             if self.n_images:
                 print("WARNING: n_images is ignored when splits are specified as integers.")
 
-            data_train = data.loc[data.split == Split.train, :].sample(self.splits[0])
-            data_val = data.loc[data.split == Split.val, :].sample(self.splits[1])
-            data_test = data.loc[data.split == Split.test, :].sample(self.splits[2])
+            data_train = data.loc[data.split == Split.train.value, :].sample(self.splits[0])
+            data_val = data.loc[data.split == Split.val.value, :].sample(self.splits[1])
+            data_test = data.loc[data.split == Split.test.value, :].sample(self.splits[2])
 
         else:
             raise ValueError("Splits must be either int or float")
