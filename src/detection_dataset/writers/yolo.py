@@ -24,7 +24,6 @@ class YoloWriter(BaseWriter):
         super().__init__(**kwargs)
 
         self.final_data["bbox"] = [bbox.to_yolo() for bbox in self.final_data.bbox]
-        self.write()
 
     def write(self) -> None:
 
@@ -68,7 +67,7 @@ class YoloWriter(BaseWriter):
         row = row.to_frame().T
         data = row.explode(["category_id", "area", "bbox"])
 
-        with open(os.path.join(self.dataset_dir, "labels", split, str(row.image_id.value) + ".txt"), "w") as outfile:
+        with open(os.path.join(self.dataset_dir, "labels", split, str(row.image_id.values) + ".txt"), "w") as outfile:
             for _, r in data.iterrows():
                 labels = " ".join((str(r.category_id), str(r.bbox[0]), str(r.bbox[1]), str(r.bbox[2]), str(r.bbox[3])))
                 outfile.write(labels + "\n")
