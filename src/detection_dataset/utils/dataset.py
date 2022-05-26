@@ -11,10 +11,9 @@ class Dataset:
             else pd.DataFrame(
                 columns=[
                     "image_id",
-                    "category_id",
-                    "attribute_ids",
-                    "bbox",
                     "bbox_id",
+                    "category_id",
+                    "bbox",
                     "width",
                     "height",
                     "area",

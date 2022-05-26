@@ -23,11 +23,11 @@ class YoloWriter(BaseWriter):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
-        self.final_data["bbox"] = [bbox.to_yolo() for bbox in self.final_data.bbox]
+        self.final_data["bbox"] = [[bbox.to_yolo() for bbox in bboxes] for bboxes in self.final_data.bbox]
 
     def write(self) -> None:
 
-        data = self._data_by_image()
+        data = self.final_data.copy()
 
         self._write_yaml()
 
@@ -65,7 +65,7 @@ class YoloWriter(BaseWriter):
     def _write_label(self, row: pd.Series) -> None:
         split = row.split
         row = row.to_frame().T
-        data = row.explode(["category_id", "area", "bbox"])
+        data = row.explode(["bbox_id", "category_id", "area", "bbox"])
 
         filename = os.path.join(self.dataset_dir, "labels", split, str(row.image_id.values[0]) + ".txt")
         with open(filename, "w") as outfile:

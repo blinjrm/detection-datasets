@@ -51,7 +51,7 @@ class CocoReader(BaseReader):
     @staticmethod
     def _json_to_dataframe(json_data: json) -> pd.DataFrame:
         annotations = pd.DataFrame(json_data["annotations"])
-        annotations = annotations.drop(columns=["segmentation", "iscrowd"], errors="ignore")
+        annotations = annotations.drop(columns=["segmentation", "iscrowd", "attribute_ids"], errors="ignore")
         annotations = annotations.rename(columns={"id": "bbox_id"})
 
         images = pd.DataFrame(json_data["images"])

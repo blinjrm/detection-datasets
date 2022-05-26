@@ -36,10 +36,38 @@ class BaseWriter(ABC):
         self.labels_mapping = labels_mapping
         self.n_images = n_images
         self.splits = splits
-        self.final_data = self._make_final_data()
-
         if self.labels_mapping:
             self._map_labels()
+        self.data_by_image = self._data_by_image()
+        self.final_data = self._make_final_data()
+
+    def _map_labels(self) -> None:
+        """Maps the labels to the new labels."""
+
+        self.data["category"] = self.data["category"].apply(lambda x: [self.labels_mapping[y] for y in x])
+
+    def _data_by_image(self) -> pd.DataFrame:
+        """Returns the dataframe grouped by image.
+
+        Returns:
+            A dataframe grouped by image
+        """
+
+        data = self.data.groupby(["image_id"])
+
+        return pd.DataFrame(
+            {
+                "bbox_id": data["bbox_id"].apply(list),
+                "category_id": data["category_id"].apply(list),
+                "bbox": data["bbox"].apply(list),
+                "width": data["width"].first(),
+                "height": data["height"].first(),
+                "area": data["area"].apply(list),
+                "image_name": data["image_name"].first(),
+                "image_path": data["image_path"].first(),
+                "split": data["split"].first(),
+            }
+        ).reset_index()
 
     def _make_final_data(self) -> None:
         """Creates the final dataset.
@@ -55,14 +83,13 @@ class BaseWriter(ABC):
                 All values inside the tuple must be of the same type, either float or int.
         """
 
-        data = self.data.copy()
+        data = self.data_by_image.copy()
 
         if all([isinstance(x, float) for x in self.splits]):
             if self.n_images:
-                data = data.sample(n=self.n_images, random_state=42)
+                # data = data.sample(n=self.n_images, random_state=42)
+                data = data.head(self.n_images)
 
-            # Taken from
-            # https://stackoverflow.com/questions/38250710/how-to-split-data-into-3-sets-train-validation-and-test
             n_train = int(self.splits[0] * len(data))
             n_val = int((self.splits[0] + self.splits[1]) * len(data))
             data_train, data_val, data_test = np.split(data, [n_train, n_val])
@@ -82,33 +109,6 @@ class BaseWriter(ABC):
             raise ValueError("Splits must be either int or float")
 
         return pd.concat([data_train, data_val, data_test])
-
-    def _map_labels(self) -> None:
-        """Maps the labels to the new labels."""
-
-        self.final_data["category"] = self.final_data["category"].apply(lambda x: [self.labels_mapping[y] for y in x])
-
-    def _data_by_image(self) -> pd.DataFrame:
-        """Returns the dataframe grouped by image.
-
-        Returns:
-            A dataframe grouped by image
-        """
-
-        data = self.final_data.groupby(["image_name"])
-
-        return pd.DataFrame(
-            {
-                "image_id": data["image_id"].first(),
-                "width": data["width"].first(),
-                "height": data["height"].first(),
-                "category_id": data["category_id"].apply(list),
-                # "attributes": data["attributes"].apply(list),
-                "area": data["area"].apply(list),
-                "bbox": data["bbox"].apply(list),
-                "split": data["split"].first(),
-            }
-        ).reset_index()
 
     @abstractmethod
     def write(self) -> pd.DataFrame:
