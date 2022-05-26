@@ -29,3 +29,6 @@ dmypy.json
 
 # Poetry
 poetry.lock
+
+# Jupyter notebook
+.ipynb_checkpoints/

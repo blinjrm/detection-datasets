@@ -1,2 +1,2 @@
 from detection_dataset.bbox import Bbox
-from detection_dataset.convert import Convert
+from detection_dataset.convert import Converter

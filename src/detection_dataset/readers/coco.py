@@ -6,8 +6,8 @@ import os
 import pandas as pd
 
 from detection_dataset.bbox import Bbox
-from detection_dataset.models import Dataset
 from detection_dataset.readers import BaseReader
+from detection_dataset.utils import Dataset
 
 
 class CocoReader(BaseReader):
@@ -38,7 +38,9 @@ class CocoReader(BaseReader):
         ]
 
         categories = [category["name"] for category in categories]
-        return Dataset(data=annotation_by_bbox, categories=categories)
+
+        dataset = Dataset(data=annotation_by_bbox, categories=categories)
+        return self._dataset.concat(dataset)
 
     @staticmethod
     def _read_json(path: str, file: str) -> json:
@@ -49,7 +51,7 @@ class CocoReader(BaseReader):
     @staticmethod
     def _json_to_dataframe(json_data: json) -> pd.DataFrame:
         annotations = pd.DataFrame(json_data["annotations"])
-        annotations = annotations.drop(columns=["segmentation", "iscrowd"], errors="ignore")
+        annotations = annotations.drop(columns=["segmentation", "iscrowd", "attribute_ids"], errors="ignore")
         annotations = annotations.rename(columns={"id": "bbox_id"})
 
         images = pd.DataFrame(json_data["images"])
