@@ -91,6 +91,8 @@ class BaseWriter(ABC):
         data = self.data_by_image.copy()
 
         if all([isinstance(x, float) for x in self.splits]):
+            assert sum(self.splits) <= 1, "The sum of the splits must lower than or equal to 1."
+
             if self.n_images:
                 data = data.sample(n=self.n_images, random_state=42)
 

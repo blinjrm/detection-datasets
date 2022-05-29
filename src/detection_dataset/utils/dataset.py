@@ -13,6 +13,7 @@ class Dataset:
                     "image_id",
                     "bbox_id",
                     "category_id",
+                    "category",
                     "bbox",
                     "width",
                     "height",
