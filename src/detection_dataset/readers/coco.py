@@ -33,8 +33,7 @@ class CocoReader(BaseReader):
             Bbox.from_coco(row.bbox, row.width, row.height) for _, row in annotation_by_bbox.iterrows()
         ]
 
-        dataset = Dataset(data=annotation_by_bbox)
-        return self._dataset.concat(dataset)
+        return Dataset(data=annotation_by_bbox)
 
     @staticmethod
     def _read_json(path: str, file: str) -> json:
