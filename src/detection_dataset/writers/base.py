@@ -87,8 +87,7 @@ class BaseWriter(ABC):
 
         if all([isinstance(x, float) for x in self.splits]):
             if self.n_images:
-                # data = data.sample(n=self.n_images, random_state=42)
-                data = data.head(self.n_images)
+                data = data.sample(n=self.n_images, random_state=42)
 
             n_train = int(self.splits[0] * len(data))
             n_val = int((self.splits[0] + self.splits[1]) * len(data))

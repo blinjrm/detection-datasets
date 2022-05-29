@@ -1,4 +1,5 @@
 import os
+import shutil
 
 import pandas as pd
 from ruamel.yaml import YAML
@@ -37,6 +38,7 @@ class YoloWriter(BaseWriter):
             self._make_dirs(split)
 
             for _, row in split_data.iterrows():
+                row = row.to_frame().T
                 self._write_image(row)
                 self._write_label(row)
 
@@ -60,15 +62,27 @@ class YoloWriter(BaseWriter):
         os.makedirs(os.path.join(self.dataset_dir, "labels", split))
 
     def _write_image(self, row: pd.DataFrame) -> None:
-        pass
+        out_file = self._get_filename(row, "images")
+        in_file = row.image_path.values[0]
+
+        shutil.copyfile(in_file, out_file)
 
     def _write_label(self, row: pd.Series) -> None:
-        split = row.split
-        row = row.to_frame().T
+        out_file = self._get_filename(row, "labels")
         data = row.explode(["bbox_id", "category_id", "area", "bbox"])
 
-        filename = os.path.join(self.dataset_dir, "labels", split, str(row.image_id.values[0]) + ".txt")
-        with open(filename, "w") as outfile:
+        with open(out_file, "w") as f:
             for _, r in data.iterrows():
                 labels = " ".join((str(r.category_id), str(r.bbox[0]), str(r.bbox[1]), str(r.bbox[2]), str(r.bbox[3])))
-                outfile.write(labels + "\n")
+                f.write(labels + "\n")
+
+    def _get_filename(self, row: pd.Series, task: str) -> str:
+        split = row.split.values[0]
+        image_id = str(row.image_id.values[0])
+
+        if task == "labels":
+            return os.path.join(self.dataset_dir, "labels", split, image_id + ".txt")
+        elif task == "images":
+            return os.path.join(self.dataset_dir, "images", split, image_id + ".jpg")
+        else:
+            raise ValueError(f"tTask must be either 'lables' or 'images', not {task}")
