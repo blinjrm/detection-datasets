@@ -33,9 +33,7 @@ class CocoReader(BaseReader):
             Bbox.from_coco(row.bbox, row.width, row.height) for _, row in annotation_by_bbox.iterrows()
         ]
 
-        categories = []
-
-        dataset = Dataset(data=annotation_by_bbox, categories=categories)
+        dataset = Dataset(data=annotation_by_bbox)
         return self._dataset.concat(dataset)
 
     @staticmethod

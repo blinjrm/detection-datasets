@@ -1,10 +1,8 @@
-from typing import List
-
 import pandas as pd
 
 
 class Dataset:
-    def __init__(self, data: pd.DataFrame = None, categories: List[str] = None) -> None:
+    def __init__(self, data: pd.DataFrame = None) -> None:
         self.data = (
             data
             if data is not None
@@ -24,9 +22,7 @@ class Dataset:
                 ]
             )
         )
-        self.categories = categories or []
 
     def concat(self, other: "Dataset") -> None:
         self.data = pd.concat([self.data, other.data])
-        self.categories = list(set(self.categories + other.categories))
         return self
