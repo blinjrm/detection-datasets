@@ -34,10 +34,8 @@ class BaseWriter(ABC):
         """
 
         self.data = dataset.data
-        # self.class_names = dataset.categories
-        self.class_names = []
-        # self.n_classes = len(dataset.categories)
-        self.n_classes = 0
+        self.class_names = dataset.class_names
+        self.n_classes = len(dataset.class_names)
         self.path = path
         self.name = name
         self.dataset_dir = os.path.join(self.path, self.name)

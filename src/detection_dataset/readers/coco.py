@@ -54,7 +54,7 @@ class CocoReader(BaseReader):
         images = images.rename(columns={"id": "image_id", "file_name": "image_name"})
 
         categories = pd.DataFrame(json_data["categories"])
-        categories = categories.drop(columns=["supercategory", "level", "taxonomy_id"], errors="ignore")
+        categories = categories.drop(columns=["level", "taxonomy_id"], errors="ignore")
         categories = categories.rename(columns={"id": "category_id", "name": "category"})
 
         data = pd.merge(annotations, images, on="image_id", how="left")
