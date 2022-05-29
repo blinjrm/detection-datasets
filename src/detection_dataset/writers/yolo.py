@@ -1,9 +1,12 @@
 import os
 import shutil
+from typing import Optional, Tuple, Union
 
 import pandas as pd
+from joblib import Parallel, delayed
 from ruamel.yaml import YAML
 
+from detection_dataset.utils import Dataset
 from detection_dataset.writers import BaseWriter
 
 yaml = YAML()
@@ -21,28 +24,61 @@ names: [{class_names}]
 
 
 class YoloWriter(BaseWriter):
-    def __init__(self, **kwargs) -> None:
-        super().__init__(**kwargs)
+    """Writes a dataset to a directory in the YOLO format."""
+
+    def __init__(
+        self,
+        dataset: Dataset,
+        path: str,
+        name: str,
+        labels_mapping: Optional[dict] = None,
+        n_images: Optional[int] = None,
+        splits: Optional[Tuple[Union[int, float]]] = (0.8, 0.1, 0.1),
+    ) -> None:
+        """Initializes the YoloWriter.
+
+        Args:
+            dataset: Dataframe containing the dataset to write to disk.
+            path: Path to the directory where the dataset will be stored.
+            name: Name of the dataset to be created in the "path" directory.
+            labels_mapping: A dictionary mapping original labels to new labels.
+            n_images: Number of images to include in the dataset.
+            splits: Tuple containing the proportion of images to include in the train, val and test splits,
+                if specified as floats, or the number of images to include in the train, val and test splits,
+                if specified as integers. Specifying splits as integers is not compatible with specifying n_images,
+                and n_images will be ignored.
+                If not specified, the dataset will be split in 80% train, 10% val and 10% test.
+        """
+
+        super().__init__(dataset, path, name, labels_mapping, n_images, splits)
 
         self.final_data["bbox"] = [[bbox.to_yolo() for bbox in bboxes] for bboxes in self.final_data.bbox]
 
     def write(self) -> None:
+        """Writes the dataset to disk.
+
+        For the YOLO format, the associated steps are:
+            1. Write the YAML file.
+            2. Create the directories for the images and labels.
+            3. Write the images and labels.
+        """
 
         data = self.final_data.copy()
 
         self._write_yaml()
 
         for split in data.split.unique():
-            split_data = data[data.split == split]
-
             self._make_dirs(split)
 
-            for _, row in split_data.iterrows():
-                row = row.to_frame().T
-                self._write_image(row)
-                self._write_label(row)
+            split_data = data[data.split == split]
+            self._write_images_labels_parallel(split_data)
 
     def _write_yaml(self) -> None:
+        """Writes the YAML file for the dataset.
+
+        In the YOLO format, this file contains the path to the images, the names of the classes, and the number of
+        classes.
+        """
 
         os.makedirs(self.dataset_dir)
 
@@ -58,16 +94,40 @@ class YoloWriter(BaseWriter):
             yaml.dump(yaml_dataset, outfile)
 
     def _make_dirs(self, split: str) -> None:
+        """Creates the directories (images, labels) for the given split.
+
+        Args:
+            split: The split to create the directories for (train, val, test).
+        """
+
         os.makedirs(os.path.join(self.dataset_dir, "images", split))
         os.makedirs(os.path.join(self.dataset_dir, "labels", split))
 
-    def _write_image(self, row: pd.DataFrame) -> None:
+    def _write_images_labels_parallel(self, split_data: pd.DataFrame) -> None:
+        """Wraps _write_images_labels for parallelization.
+
+        Args:
+            split_data: The data to write corresponding to a single split.
+        """
+
+        Parallel()(delayed(self._write_images_labels)(row) for _, row in split_data.iterrows())
+
+    def _write_images_labels(self, row: pd.DataFrame) -> None:
+        """Writes the images and labels for a single image.
+
+        Args:
+            row: The row of the dataframe to write.
+        """
+
+        row = row.to_frame().T
+
+        # Images
         out_file = self._get_filename(row, "images")
         in_file = row.image_path.values[0]
 
         shutil.copyfile(in_file, out_file)
 
-    def _write_label(self, row: pd.Series) -> None:
+        # Labels
         out_file = self._get_filename(row, "labels")
         data = row.explode(["bbox_id", "category_id", "area", "bbox"])
 
@@ -77,6 +137,19 @@ class YoloWriter(BaseWriter):
                 f.write(labels + "\n")
 
     def _get_filename(self, row: pd.Series, task: str) -> str:
+        """Returns the filename for the given row and task.
+
+        Args:
+            row: The row of the dataframe to write.
+            task: The task to get the filename for (images, labels).
+
+        Returns:
+            The filename for the given row and task.
+
+        Raises:
+            ValueError: If the task is not images or labels.
+        """
+
         split = row.split.values[0]
         image_id = str(row.image_id.values[0])
 

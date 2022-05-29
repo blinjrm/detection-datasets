@@ -21,10 +21,16 @@ class BaseWriter(ABC):
         """Base class for writing datasets to disk.
 
         Args:
-            data: Dataframe containing the dataset to write to disk.
+            dataset: Dataframe containing the dataset to write to disk.
             path: Path to the directory where the dataset will be stored.
-            name: Name of the dataset.
+            name: Name of the dataset to be created in the "path" directory.
             labels_mapping: A dictionary mapping original labels to new labels.
+            n_images: Number of images to include in the dataset.
+            splits: Tuple containing the proportion of images to include in the train, val and test splits,
+                if specified as floats, or the number of images to include in the train, val and test splits,
+                if specified as integers. Specifying splits as integers is not compatible with specifying n_images,
+                and n_images will be ignored.
+                If not specified, the dataset will be split in 80% train, 10% val and 10% test.
         """
 
         self.data = dataset.data
@@ -49,8 +55,7 @@ class BaseWriter(ABC):
     def _data_by_image(self) -> pd.DataFrame:
         """Returns the dataframe grouped by image.
 
-        Returns:
-            A dataframe grouped by image
+        Returns:     A dataframe grouped by image
         """
 
         data = self.data.groupby(["image_id"])
@@ -72,15 +77,10 @@ class BaseWriter(ABC):
     def _make_final_data(self) -> None:
         """Creates the final dataset.
 
-        The final dataset takes into account the number of images to include,
-        and the splits between train, val and test.
-
-        Returns:
-            A dataframe containing the final dataset.
-
-        Raises:
-            ValueError: If the values in the splits tuple are not of type float or int.
-                All values inside the tuple must be of the same type, either float or int.
+        The final dataset takes into account the number of images to include, and the splits between train, val and
+        test.  Returns:     A dataframe containing the final dataset.  Raises:     ValueError: If the values in the
+        splits tuple are not of type float or int.         All values inside the tuple must be of the same type, either
+        float or int.
         """
 
         data = self.data_by_image.copy()

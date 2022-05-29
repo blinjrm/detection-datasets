@@ -18,6 +18,7 @@ packages = [{ include = "detection_dataset", from = "src" }]
 python = "^3.8"
 pandas = "^1.4.2"
 "ruamel.yaml" = "^0.17.21"
+joblib = "^1.1.0"
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"
