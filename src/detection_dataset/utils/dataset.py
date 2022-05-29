@@ -28,10 +28,29 @@ class Dataset:
     def concat(self, other: "Dataset") -> None:
         self.data = pd.concat([self.data, other.data])
         self._clean_dategories()
-        return self
+        # return self
+
+    def map_categories(self, mapping: pd.DataFrame) -> None:
+        """Maps the categories to the new categories."""
+
+        mapping = mapping.loc[:, ["category_id", "category", "new_category_id", "new_category"]]
+
+        data = self.data.copy()
+        data = data.merge(mapping, on=["category_id", "category"], how="left", validate="m:1")
+        data = data[data.new_category_id >= 0]
+        self.data = data.rename(
+            columns={
+                "category_id": "category_id_original",
+                "category": "category_original",
+                "new_category_id": "category_id",
+                "new_category": "category",
+            }
+        )
+        print(self.data.columns)
+        self._clean_dategories()
 
     def _clean_dategories(self) -> None:
-        """Returns a DataFrame containing the categories found in the data with their id."""
+        """Creates a DataFrame containing the categories found in the data with their id."""
 
         self.categories = (
             self.data.loc[:, ["category_id", "category", "supercategory"]]
@@ -42,4 +61,4 @@ class Dataset:
 
     @property
     def class_names(self) -> list:
-        return self.categories.category.tolist()
+        return self.categories.category.unique()

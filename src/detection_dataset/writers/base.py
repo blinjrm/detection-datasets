@@ -14,7 +14,7 @@ class BaseWriter(ABC):
         dataset: Dataset,
         path: str,
         name: str,
-        labels_mapping: Optional[dict] = None,
+        category_mapping: Optional[dict] = None,
         n_images: Optional[int] = None,
         splits: Optional[Tuple[Union[int, float]]] = (0.8, 0.1, 0.1),
     ) -> None:
@@ -24,7 +24,7 @@ class BaseWriter(ABC):
             dataset: Dataframe containing the dataset to write to disk.
             path: Path to the directory where the dataset will be stored.
             name: Name of the dataset to be created in the "path" directory.
-            labels_mapping: A dictionary mapping original labels to new labels.
+            category_mapping: A dictionary mapping original categories to new categories.
             n_images: Number of images to include in the dataset.
             splits: Tuple containing the proportion of images to include in the train, val and test splits,
                 if specified as floats,
@@ -39,23 +39,24 @@ class BaseWriter(ABC):
         self.path = path
         self.name = name
         self.dataset_dir = os.path.join(self.path, self.name)
-        self.labels_mapping = labels_mapping
         self.n_images = n_images
         self.splits = splits
-        if self.labels_mapping:
-            self._map_labels()
+
         self.data_by_image = self._data_by_image()
         self.final_data = self._make_final_data()
 
-    def _map_labels(self) -> None:
+    @staticmethod
+    def _map_labels(data: pd.DataFrame, mapping: pd.DataFrame) -> pd.DataFrame:
         """Maps the labels to the new labels."""
 
-        self.data["category"] = self.data["category"].apply(lambda x: [self.labels_mapping[y] for y in x])
+        data = data.merge(mapping, on="category_id", how="left", validate="1:1")
+        return data
 
     def _data_by_image(self) -> pd.DataFrame:
         """Returns the dataframe grouped by image.
 
-        Returns:     A dataframe grouped by image
+        Returns:
+            A dataframe grouped by image
         """
 
         data = self.data.groupby(["image_id"])
@@ -77,8 +78,8 @@ class BaseWriter(ABC):
     def _make_final_data(self) -> None:
         """Creates the final dataset.
 
-        The final dataset takes into account the number of images to include, and the splits between train, val and
-        test.
+        The final dataset takes into account the number of images to include,
+        and the splits between train, val and test.
 
         Returns:
             A dataframe containing the final dataset.
