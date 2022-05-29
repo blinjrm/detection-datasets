@@ -1,12 +1,10 @@
 import os
 import shutil
-from typing import Optional, Tuple, Union
 
 import pandas as pd
 from joblib import Parallel, delayed
 from ruamel.yaml import YAML
 
-from detection_dataset.utils import Dataset
 from detection_dataset.writers import BaseWriter
 
 yaml = YAML()
@@ -26,31 +24,9 @@ names: [{class_names}]
 class YoloWriter(BaseWriter):
     """Writes a dataset to a directory in the YOLO format."""
 
-    def __init__(
-        self,
-        dataset: Dataset,
-        path: str,
-        name: str,
-        labels_mapping: Optional[dict] = None,
-        n_images: Optional[int] = None,
-        splits: Optional[Tuple[Union[int, float]]] = (0.8, 0.1, 0.1),
-    ) -> None:
-        """Initializes the YoloWriter.
-
-        Args:
-            dataset: Dataframe containing the dataset to write to disk.
-            path: Path to the directory where the dataset will be stored.
-            name: Name of the dataset to be created in the "path" directory.
-            labels_mapping: A dictionary mapping original labels to new labels.
-            n_images: Number of images to include in the dataset.
-            splits: Tuple containing the proportion of images to include in the train, val and test splits,
-                if specified as floats, or the number of images to include in the train, val and test splits,
-                if specified as integers. Specifying splits as integers is not compatible with specifying n_images,
-                and n_images will be ignored.
-                If not specified, the dataset will be split in 80% train, 10% val and 10% test.
-        """
-
-        super().__init__(dataset, path, name, labels_mapping, n_images, splits)
+    def __init__(self, **kwargs) -> None:
+        """Initializes the YoloWriter."""
+        super().__init__(**kwargs)
 
         self.final_data["bbox"] = [[bbox.to_yolo() for bbox in bboxes] for bboxes in self.final_data.bbox]
 

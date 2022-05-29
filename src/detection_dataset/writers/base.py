@@ -27,9 +27,9 @@ class BaseWriter(ABC):
             labels_mapping: A dictionary mapping original labels to new labels.
             n_images: Number of images to include in the dataset.
             splits: Tuple containing the proportion of images to include in the train, val and test splits,
-                if specified as floats, or the number of images to include in the train, val and test splits,
-                if specified as integers. Specifying splits as integers is not compatible with specifying n_images,
-                and n_images will be ignored.
+                if specified as floats,
+                or the number of images to include in the train, val and test splits, if specified as integers.
+                Specifying splits as integers is not compatible with specifying n_images, and n_images will be ignored.
                 If not specified, the dataset will be split in 80% train, 10% val and 10% test.
         """
 
@@ -78,9 +78,14 @@ class BaseWriter(ABC):
         """Creates the final dataset.
 
         The final dataset takes into account the number of images to include, and the splits between train, val and
-        test.  Returns:     A dataframe containing the final dataset.  Raises:     ValueError: If the values in the
-        splits tuple are not of type float or int.         All values inside the tuple must be of the same type, either
-        float or int.
+        test.
+
+        Returns:
+            A dataframe containing the final dataset.
+
+        Raises:
+            ValueError: If the values in the splits tuple are not of type float or int.
+            All values inside the tuple must be of the same type, either float or int.
         """
 
         data = self.data_by_image.copy()
@@ -90,8 +95,10 @@ class BaseWriter(ABC):
                 data = data.sample(n=self.n_images, random_state=42)
 
             n_train = int(self.splits[0] * len(data))
-            n_val = int((self.splits[0] + self.splits[1]) * len(data))
-            data_train, data_val, data_test = np.split(data, [n_train, n_val])
+            n_val = int(n_train + self.splits[1] * len(data))
+            n_test = int(n_val + self.splits[2] * len(data))
+            data_train, data_val, data_test, _ = np.split(data, [n_train, n_val, n_test])
+
             data_train["split"] = Split.train.value
             data_val["split"] = Split.val.value
             data_test["split"] = Split.test.value
