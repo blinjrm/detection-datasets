@@ -14,7 +14,6 @@ class BaseWriter(ABC):
         dataset: Dataset,
         path: str,
         name: str,
-        category_mapping: Optional[dict] = None,
         n_images: Optional[int] = None,
         splits: Optional[Tuple[Union[int, float]]] = (0.8, 0.1, 0.1),
     ) -> None:
@@ -44,13 +43,6 @@ class BaseWriter(ABC):
 
         self.data_by_image = self._data_by_image()
         self.final_data = self._make_final_data()
-
-    @staticmethod
-    def _map_labels(data: pd.DataFrame, mapping: pd.DataFrame) -> pd.DataFrame:
-        """Maps the labels to the new labels."""
-
-        data = data.merge(mapping, on="category_id", how="left", validate="1:1")
-        return data
 
     def _data_by_image(self) -> pd.DataFrame:
         """Returns the dataframe grouped by image.

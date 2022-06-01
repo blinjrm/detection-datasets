@@ -26,6 +26,7 @@ class YoloWriter(BaseWriter):
 
     def __init__(self, **kwargs) -> None:
         """Initializes the YoloWriter."""
+
         super().__init__(**kwargs)
 
         self.final_data["bbox"] = [[bbox.to_yolo() for bbox in bboxes] for bboxes in self.final_data.bbox]
@@ -98,8 +99,8 @@ class YoloWriter(BaseWriter):
         row = row.to_frame().T
 
         # Images
-        out_file = self._get_filename(row, "images")
         in_file = row.image_path.values[0]
+        out_file = self._get_filename(row, "images")
 
         shutil.copyfile(in_file, out_file)
 

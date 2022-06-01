@@ -46,7 +46,7 @@ class Dataset:
                 "new_category": "category",
             }
         )
-        print(self.data.columns)
+
         self._clean_dategories()
 
     def _clean_dategories(self) -> None:

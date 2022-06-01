@@ -1,84 +1,75 @@
 import os
 import shutil
+from typing import Dict, List
 
-import numpy as np
 import pandas as pd
 
 from detection_dataset.writers import BaseWriter
 
 
 class MmdetWriter(BaseWriter):
-    def __init__(self, data: pd.DataFrame, path: str, name: str) -> None:
-        super().__init__(data, path, name)
+    def __init__(self, **kwargs) -> None:
+        """Initializes the YoloWriter."""
 
-        # self.data["bbox"] = [Bbox.to_mmdet(row.bbox, row.width, row.height) for _, row in self.data.iterrows()]
+        super().__init__(**kwargs)
 
-        self.write()
+        self.final_data["bbox"] = [[bbox.to_voc() for bbox in bboxes] for bboxes in self.final_data.bbox]
 
     def write(self) -> None:
-        data = self._data_by_image()
+        """Writes the dataset to disk.
 
-        os.makedirs(os.path.join(self.path, self.name))
-        self._save_metadata()
+        For the MMDET format, the associated steps are:
+            1. Create the directories for the images and annotations.
+            2. Prepare the data for any given split.
+            3. Write the annotation file to disk for each split.
+            4. Write the images to disk for each split.
+        """
 
-        # TODO: allow selecting split
-        # TODO: move to BaseWriter
-        splits = ["train", "val", "test"]
-        datasets = np.split(data.sample(frac=1, random_state=42), [int(0.8 * len(data)), int(0.9 * len(data))])
+        data = self.final_data.copy()
 
-        for i, data_split in enumerate(datasets):
-            print(f"Generate {splits[i]} dataset")
-            path = os.path.join(self.path, self.name, splits[i])
-            os.makedirs(path)
+        for split in data.split.unique():
+            os.makedirs(os.path.join(self.dataset_dir, split, "images"))
 
-            data = self._make_mmdet_data(data_split=data_split)
-            self._save_dataset(data=data, dataset_path=path)
-
-    def _save_metadata(self):
-        """Saves the metadata."""
-
-        path = os.path.join(self.path, self.name, "labels_mapping.csv")
-        self.labels_mapping.to_csv(path, index=False)
+            split_data = data[data.split == split]
+            dataset = self._make_mmdet_data(split_data)
+            self._save_dataset(dataset, split)
 
     def _make_mmdet_data(self, data_split: pd.DataFrame):
 
         mmdet_data = []
+        source_imges = []
 
         for _, row in data_split.iterrows():
             annotations = {}
             annotations["bboxes"] = row["bbox"]
-
-            if self.labels_mapping is not None:
-                labels_mapping = self.labels_mappings
-                original_ids = row["category"]
-                annotations["labels"] = [
-                    labels_mapping[labels_mapping["original_id"] == original_id]["id"].values[0]
-                    for original_id in original_ids
-                    if labels_mapping[labels_mapping["original_id"] == original_id]["id"].values[0] > 0
-                ]
-            else:
-                annotations["labels"] = row["category"]
+            annotations["labels"] = row["category_id"]
 
             data = {}
-            data["filename"] = row["filename"]
+            data["filename"] = "".join((str(row["image_id"]), ".jpg"))
             data["width"] = row["width"]
             data["height"] = row["height"]
             data["ann"] = annotations
 
             mmdet_data.append(data)
+            source_imges.append(row["image_path"])
 
-        return mmdet_data
+            dataset = {"mmdet_data": mmdet_data, "source_imges": source_imges}
 
-    def _save_dataset(self, data: list, dataset_path: str):
+        return dataset
+
+    def _save_dataset(self, dataset: Dict[str, List[str]], split: str):
         """Creates a new directory and saves the dataset and images."""
 
-        os.makedirs(os.path.join(dataset_path, "images"))
+        split_path = os.path.join(self.dataset_dir, split)
+        mmdet_data = dataset["mmdet_data"]
+        source_images = dataset["source_imges"]
 
-        # Save data
-        with open(os.path.join(dataset_path, "annotation.jsonl"), "w") as f:
-            f.write(str(data))
+        # Labels
+        with open(os.path.join(split_path, "annotation.jsonl"), "w") as f:
+            f.write(str(mmdet_data))
 
-        # Save corresponding images
-        for image in data:
-            filename = image["filename"]
-            shutil.copy(os.path.join(self.dir_images, filename), os.path.join(dataset_path, "images", filename))
+        # Images
+        for mmdet_data_image, original_image_path in zip(mmdet_data, source_images):
+            out_file = os.path.join(self.dataset_dir, split, "images", mmdet_data_image["filename"])
+
+            shutil.copyfile(original_image_path, out_file)
