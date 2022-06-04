@@ -11,12 +11,12 @@ from detection_dataset.utils import Dataset
 
 
 class CocoReader(BaseReader):
-    def __init__(self, path: str, splits: dict[str, tuple[str, str]]) -> None:
-        super().__init__(path, splits)
+    def __init__(self, path: str) -> None:
+        super().__init__(path)
 
-    def load(self) -> pd.DataFrame:
+    def load(self, splits: dict[str, tuple[str, str]], **kwargs) -> Dataset:
         annotation_dataframes = []
-        for split, (annotation_file, images_dir) in self.splits.items():
+        for split, (annotation_file, images_dir) in splits.items():
             images_path_prefix = os.path.join(self.path, images_dir)
 
             json = self._read_json(self.path, annotation_file)

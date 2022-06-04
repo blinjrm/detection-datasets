@@ -1,11 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Tuple
 
-import pandas as pd
+from detection_dataset.utils import Dataset
 
 
 class BaseReader(ABC):
-    def __init__(self, path: str, splits: Dict[str, Tuple[str, str]]) -> None:
+    def __init__(self, path: str) -> None:
         """Base class for loading datasets in memory.
 
         Args:
@@ -13,22 +12,11 @@ class BaseReader(ABC):
         """
 
         self.path = path
-        self.splits = splits
 
     @abstractmethod
-    def load(self) -> pd.DataFrame:
+    def load(self) -> Dataset:
         """Load a dataset.
 
         Returns:
-            A pandas DataFrame containing the dataset.
+            A Dataset instance containing the data loaded.
         """
-
-    @property
-    def dataset(self) -> pd.DataFrame:
-        """Access the class data.
-
-        Returns:
-            A pandas DataFrame containing the dataset.
-        """
-
-        return self._dataset
