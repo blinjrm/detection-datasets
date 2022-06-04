@@ -14,37 +14,35 @@ class BaseWriter(ABC):
         dataset: Dataset,
         path: str,
         name: str,
-        labels_mapping: Optional[dict] = None,
         n_images: Optional[int] = None,
         splits: Optional[Tuple[Union[int, float]]] = (0.8, 0.1, 0.1),
     ) -> None:
         """Base class for writing datasets to disk.
 
         Args:
-            data: Dataframe containing the dataset to write to disk.
+            dataset: Dataframe containing the dataset to write to disk.
             path: Path to the directory where the dataset will be stored.
-            name: Name of the dataset.
-            labels_mapping: A dictionary mapping original labels to new labels.
+            name: Name of the dataset to be created in the "path" directory.
+            category_mapping: A dictionary mapping original categories to new categories.
+            n_images: Number of images to include in the dataset.
+            splits: Tuple containing the proportion of images to include in the train, val and test splits,
+                if specified as floats,
+                or the number of images to include in the train, val and test splits, if specified as integers.
+                Specifying splits as integers is not compatible with specifying n_images, and n_images will be ignored.
+                If not specified, the dataset will be split in 80% train, 10% val and 10% test.
         """
 
         self.data = dataset.data
-        self.class_names = dataset.categories
-        self.n_classes = len(dataset.categories)
+        self.class_names = dataset.class_names
+        self.n_classes = len(dataset.class_names)
         self.path = path
         self.name = name
         self.dataset_dir = os.path.join(self.path, self.name)
-        self.labels_mapping = labels_mapping
         self.n_images = n_images
         self.splits = splits
-        if self.labels_mapping:
-            self._map_labels()
+
         self.data_by_image = self._data_by_image()
         self.final_data = self._make_final_data()
-
-    def _map_labels(self) -> None:
-        """Maps the labels to the new labels."""
-
-        self.data["category"] = self.data["category"].apply(lambda x: [self.labels_mapping[y] for y in x])
 
     def _data_by_image(self) -> pd.DataFrame:
         """Returns the dataframe grouped by image.
@@ -80,19 +78,22 @@ class BaseWriter(ABC):
 
         Raises:
             ValueError: If the values in the splits tuple are not of type float or int.
-                All values inside the tuple must be of the same type, either float or int.
+            All values inside the tuple must be of the same type, either float or int.
         """
 
         data = self.data_by_image.copy()
 
         if all([isinstance(x, float) for x in self.splits]):
+            assert sum(self.splits) <= 1, "The sum of the splits must lower than or equal to 1."
+
             if self.n_images:
-                # data = data.sample(n=self.n_images, random_state=42)
-                data = data.head(self.n_images)
+                data = data.sample(n=self.n_images, random_state=42)
 
             n_train = int(self.splits[0] * len(data))
-            n_val = int((self.splits[0] + self.splits[1]) * len(data))
-            data_train, data_val, data_test = np.split(data, [n_train, n_val])
+            n_val = int(n_train + self.splits[1] * len(data))
+            n_test = int(n_val + self.splits[2] * len(data))
+            data_train, data_val, data_test, _ = np.split(data, [n_train, n_val, n_test])
+
             data_train["split"] = Split.train.value
             data_val["split"] = Split.val.value
             data_test["split"] = Split.test.value
