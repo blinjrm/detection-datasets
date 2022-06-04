@@ -44,8 +44,8 @@ class Converter:
         config["path"] = path
 
         self.reader = reader_factory.get(dataset_format, **config)
-        dataset = self.reader.load(**kwargs)
-        self._dataset.concat(dataset)
+        data = self.reader.load(**kwargs)
+        self._dataset.concat(data)
         # self.splits = self._dataset.read_splits()
 
     def transform(
@@ -62,7 +62,7 @@ class Converter:
         - create new (train, val, test) splits
 
         Args:
-            category_mapping (optional): A dictionary mapping original categories to new categories. Defaults to None.
+            category_mapping (optional): A DataFrame mapping original categories to new categories. Defaults to None.
             n_images (optional): Number of images to include in the dataset. Defaults to None.
             splits (optional): Tuple containing the proportion of images to include in the train, val and test splits,
                 if specified as floats, or the number of images to include in the  splits, if specified as integers.

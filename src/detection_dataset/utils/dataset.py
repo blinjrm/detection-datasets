@@ -1,37 +1,45 @@
+from typing import List, Tuple, Union
+
 import pandas as pd
 
 
 class Dataset:
-    def __init__(self, data: pd.DataFrame = None) -> None:
-        self.data = (
-            data
-            if data is not None
-            else pd.DataFrame(
-                columns=[
-                    "image_id",
-                    "bbox_id",
-                    "category_id",
-                    "category",
-                    "supercategory",
-                    "bbox",
-                    "width",
-                    "height",
-                    "area",
-                    "image_name",
-                    "image_path",
-                    "split",
-                ]
-            )
-        )
-        self._clean_dategories()
 
-    def concat(self, other: "Dataset") -> None:
-        self.data = pd.concat([self.data, other.data])
-        self._clean_dategories()
-        # return self
+    COLUMNS = [
+        "image_id",
+        "bbox_id",
+        "category_id",
+        "category",
+        "supercategory",
+        "bbox",
+        "width",
+        "height",
+        "area",
+        "image_name",
+        "image_path",
+        "split",
+    ]
+
+    data = pd.DataFrame(columns=COLUMNS)
+
+    def __init__(self, data: pd.DataFrame = None) -> None:
+        """Initializes the dataset."""
+
+        if data is not None:
+            data = data[data.columns.intersection(self.COLUMNS)]
+            self.concat(data)
+
+    def concat(self, other_data: pd.DataFrame) -> None:
+        """Concatenates the existing data with new data."""
+
+        self.data = pd.concat([self.data, other_data])
 
     def map_categories(self, mapping: pd.DataFrame) -> None:
-        """Maps the categories to the new categories."""
+        """Maps the categories to the new categories.
+
+        Args:
+            category_mapping: A DataFrame mapping original categories to new categories.
+        """
 
         mapping = mapping.loc[:, ["category_id", "category", "new_category_id", "new_category"]]
 
@@ -47,12 +55,29 @@ class Dataset:
             }
         )
 
-        self._clean_dategories()
+    def limit_images(self, n_images: int) -> None:
+        """Limits the number of images to n_images.
 
-    def _clean_dategories(self) -> None:
+        TODO: add documentation
+        """
+
+        # keep original splits
+        raise NotImplementedError
+
+    def split(self, splits: Tuple[Union[int, float]]) -> None:
+        """Splits the dataset into train, val and test.
+
+        TODO: add documentation
+        """
+
+        # keep original splits
+        raise NotImplementedError
+
+    @property
+    def dategories(self) -> None:
         """Creates a DataFrame containing the categories found in the data with their id."""
 
-        self.categories = (
+        return (
             self.data.loc[:, ["category_id", "category", "supercategory"]]
             .drop_duplicates()
             .sort_values("category_id")
@@ -60,5 +85,13 @@ class Dataset:
         )
 
     @property
-    def class_names(self) -> list:
+    def class_names(self) -> List[str]:
+        """Returns the class names."""
+
         return self.categories.category.unique()
+
+    @property
+    def n_classes(self) -> int:
+        """Returns the number of classes."""
+
+        return self.categories.category.nunique()
