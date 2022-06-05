@@ -63,11 +63,13 @@ class Converter:
 
         Args:
             category_mapping (optional): A DataFrame mapping original categories to new categories. Defaults to None.
-            n_images (optional): Number of images to include in the dataset. Defaults to None.
             splits (optional): Tuple containing the proportion of images to include in the train, val and test splits,
                 if specified as floats, or the number of images to include in the  splits, if specified as integers.
-                Specifying splits as integers is not compatible with specifying n_images, and n_images will be ignored.
+                In both cases, the original splits will be overwritten. To reduce the dataset size while keeping the
+                original proportions of data between splits, use `n_images` argument only.
                 If not specified, the original splits from the dataset will be used. Defaults to None.
+            n_images (optional): Number of images to include in the dataset. Respects the proportion of images in each
+            split. Defaults to None.
         """
 
         if category_mapping is not None:

@@ -72,38 +72,35 @@ class Dataset:
         Args:
             splits: Tuple containing, depending on the type of the values (int or float):
                 - Proportion of images to include in the train, val and test splits, if specified as floats.
-                  The original splits will be overwritten.
                   The sum of the values in the tuple can be lower than 1, then the dataset size will be reduced.
                 - Number of images to include in the each split, if specified as integers.
-                  The original splits will be respected.
+            In both cases, the original splits will be overwritten.
         """
-
-        data = self.data.copy()
 
         if len(splits) != 3:
             raise ValueError(f"The splits must be a tuple of 3 elements, here it is: {splits}.")
 
+        data_by_image = self.data_by_image
+
         if all([isinstance(x, float) for x in splits]):
             assert sum(splits) <= 1, "The sum of the splits must lower than or equal to 1."
-
-            n_train = int(splits[0] * len(data))
-            n_val = int(n_train + splits[1] * len(data))
-            n_test = int(n_val + splits[2] * len(data))
-            data_train, data_val, data_test, _ = np.split(data, [n_train, n_val, n_test])
-
-            data_train["split"] = Split.train.value
-            data_val["split"] = Split.val.value
-            data_test["split"] = Split.test.value
+            n_train = int(splits[0] * len(data_by_image))
+            n_val = int(n_train + splits[1] * len(data_by_image))
+            n_test = int(n_val + splits[2] * len(data_by_image))
 
         elif all([isinstance(x, int) for x in self.splits]):
-            data_train = data.loc[data.split == Split.train.value, :].sample(self.splits[0])
-            data_val = data.loc[data.split == Split.val.value, :].sample(self.splits[1])
-            data_test = data.loc[data.split == Split.test.value, :].sample(self.splits[2])
+            n_train, n_val, n_test = splits[0], splits[1], splits[2]
 
         else:
             raise ValueError("Splits must be either int or float")
 
-        return pd.concat([data_train, data_val, data_test])
+        data_train, data_val, data_test, _ = np.split(data_by_image, [n_train, n_val, n_test])
+        data_train["split"] = Split.train.value
+        data_val["split"] = Split.val.value
+        data_test["split"] = Split.test.value
+
+        data = pd.concat([data_train, data_val, data_test])
+        self.data = self.explode(data)
 
     def limit_images(self, n_images: int) -> None:
         """Limits the number of images to n_images.
@@ -118,16 +115,46 @@ class Dataset:
                 "The number of images to include in the dataset is greater than the number of images present."
             )
 
-        data = self.data.copy()
         split_data = []
+        data_by_image = self.data_by_image
         for split in Split:
-            split_data.append(
-                data.loc[data.split == split.value, :].sample(
-                    int(n_images / self.split_proportions[split]), random_state=42
+            if split.value in data_by_image.split.unique():
+                split_data.append(
+                    data_by_image.loc[data_by_image.split == split.value, :].sample(
+                        int(n_images * self.split_proportions[split.value]), random_state=42
+                    )
                 )
-            )
 
-        self.data = pd.concat(split_data)
+        data = pd.concat(split_data)
+        self.data = self.explode(data)
+
+    def explode(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Converts a DataFrame arranged by image to a DataFrame arranged by bbox.
+
+        Args:
+            data: Dataframe to explode.
+        """
+
+        return data.explode(["bbox_id", "category_id", "area", "bbox"]).set_index(["image_id", "bbox_id"])
+
+    @property
+    def data_by_image(self) -> pd.DataFrame:
+        """Returns the data grouped by image."""
+
+        data = self.data.reset_index().groupby("image_id")
+        return pd.DataFrame(
+            {
+                "bbox_id": data["bbox_id"].apply(list),
+                "category_id": data["category_id"].apply(list),
+                "bbox": data["bbox"].apply(list),
+                "width": data["width"].first(),
+                "height": data["height"].first(),
+                "area": data["area"].apply(list),
+                "image_name": data["image_name"].first(),
+                "image_path": data["image_path"].first(),
+                "split": data["split"].first(),
+            }
+        ).reset_index()
 
     @property
     def n_images(self) -> int:
@@ -144,8 +171,6 @@ class Dataset:
     @property
     def split_proportions(self) -> Tuple[float, float, float]:
         """Returns the proportion of images in the train, val and test splits."""
-
-        # proportion = self.data.split.value_counts() / len(self.data)
 
         data = self.data.copy()
         return pd.DataFrame({s.value: [len(data[data.split == s.value]) / len(data)] for s in Split})
