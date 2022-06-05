@@ -2,10 +2,9 @@ import os
 from abc import ABC, abstractmethod
 from typing import Optional, Tuple, Union
 
-import numpy as np
 import pandas as pd
 
-from detection_dataset.utils import Dataset, Split
+from detection_dataset.utils import Dataset
 
 
 class BaseWriter(ABC):
@@ -41,75 +40,31 @@ class BaseWriter(ABC):
         self.n_images = n_images
         self.splits = splits
 
-        self.data_by_image = self._data_by_image()
-        self.final_data = self._make_final_data()
+        # self.data_by_image = self._data_by_image()
+        # self.final_data = self._make_final_data()
 
-    def _data_by_image(self) -> pd.DataFrame:
-        """Returns the dataframe grouped by image.
+    # def _data_by_image(self) -> pd.DataFrame:
+    #     """Returns the dataframe grouped by image.
 
-        Returns:
-            A dataframe grouped by image
-        """
+    #     Returns:
+    #         A dataframe grouped by image
+    #     """
 
-        data = self.data.groupby(["image_id"])
+    #     data = self.data.groupby(["image_id"])
 
-        return pd.DataFrame(
-            {
-                "bbox_id": data["bbox_id"].apply(list),
-                "category_id": data["category_id"].apply(list),
-                "bbox": data["bbox"].apply(list),
-                "width": data["width"].first(),
-                "height": data["height"].first(),
-                "area": data["area"].apply(list),
-                "image_name": data["image_name"].first(),
-                "image_path": data["image_path"].first(),
-                "split": data["split"].first(),
-            }
-        ).reset_index()
-
-    def _make_final_data(self) -> None:
-        """Creates the final dataset.
-
-        The final dataset takes into account the number of images to include,
-        and the splits between train, val and test.
-
-        Returns:
-            A dataframe containing the final dataset.
-
-        Raises:
-            ValueError: If the values in the splits tuple are not of type float or int.
-            All values inside the tuple must be of the same type, either float or int.
-        """
-
-        data = self.data_by_image.copy()
-
-        if all([isinstance(x, float) for x in self.splits]):
-            assert sum(self.splits) <= 1, "The sum of the splits must lower than or equal to 1."
-
-            if self.n_images:
-                data = data.sample(n=self.n_images, random_state=42)
-
-            n_train = int(self.splits[0] * len(data))
-            n_val = int(n_train + self.splits[1] * len(data))
-            n_test = int(n_val + self.splits[2] * len(data))
-            data_train, data_val, data_test, _ = np.split(data, [n_train, n_val, n_test])
-
-            data_train["split"] = Split.train.value
-            data_val["split"] = Split.val.value
-            data_test["split"] = Split.test.value
-
-        elif all([isinstance(x, int) for x in self.splits]):
-            if self.n_images:
-                print("WARNING: n_images is ignored when splits are specified as integers.")
-
-            data_train = data.loc[data.split == Split.train.value, :].sample(self.splits[0])
-            data_val = data.loc[data.split == Split.val.value, :].sample(self.splits[1])
-            data_test = data.loc[data.split == Split.test.value, :].sample(self.splits[2])
-
-        else:
-            raise ValueError("Splits must be either int or float")
-
-        return pd.concat([data_train, data_val, data_test])
+    #     return pd.DataFrame(
+    #         {
+    #             "bbox_id": data["bbox_id"].apply(list),
+    #             "category_id": data["category_id"].apply(list),
+    #             "bbox": data["bbox"].apply(list),
+    #             "width": data["width"].first(),
+    #             "height": data["height"].first(),
+    #             "area": data["area"].apply(list),
+    #             "image_name": data["image_name"].first(),
+    #             "image_path": data["image_path"].first(),
+    #             "split": data["split"].first(),
+    #         }
+    #     ).reset_index()
 
     @abstractmethod
     def write(self) -> pd.DataFrame:

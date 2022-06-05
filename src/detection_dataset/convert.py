@@ -73,12 +73,12 @@ class Converter:
         if category_mapping is not None:
             self.category_mapping = category_mapping
             self._dataset.map_categories(category_mapping)
-        if n_images:
-            self.n_images = n_images
-            self._dataset.limit_images(n_images)
         if splits:
             self.splits = splits
             self._dataset.split(splits)
+        if n_images:
+            self.n_images = n_images
+            self._dataset.limit_images(n_images)
 
     def write(
         self,
