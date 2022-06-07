@@ -19,8 +19,6 @@ class Converter:
 
         self._dataset = Dataset()
         self.category_mapping = None
-        self.n_images = len(self._dataset.data)
-        # self.splits = self._dataset.read_splits()
 
     def read(
         self,
@@ -53,6 +51,7 @@ class Converter:
         category_mapping: Optional[pd.DataFrame] = None,
         n_images: Optional[int] = None,
         splits: Optional[Tuple[Union[int, float]]] = None,
+        balance_categories: bool = False,
     ) -> None:
         """Transforms the dataset.
 
@@ -63,24 +62,23 @@ class Converter:
 
         Args:
             category_mapping (optional): A DataFrame mapping original categories to new categories. Defaults to None.
-            splits (optional): Tuple containing the proportion of images to include in the train, val and test splits,
-                if specified as floats, or the number of images to include in the  splits, if specified as integers.
-                In both cases, the original splits will be overwritten. To reduce the dataset size while keeping the
-                original proportions of data between splits, use `n_images` argument only.
-                If not specified, the original splits from the dataset will be used. Defaults to None.
             n_images (optional): Number of images to include in the dataset. Respects the proportion of images in each
-            split. Defaults to None.
+                split. Defaults to None.
+            splits: Iterable containing the proportion of images to include in the train, val and test splits.
+                The sum of the values in the iterable must be equal to 1. The original splits will be overwritten.
+                Defaults to None.
+            balance_categories: Whether to balance the number of bboxes per category when reducing the dataset to given
+                splits or n_images. If False, the dataset will be randomly sampled. Defaults to False.
         """
 
+        self.balance_categories = balance_categories
         if category_mapping is not None:
             self.category_mapping = category_mapping
             self._dataset.map_categories(category_mapping)
         if splits:
-            self.splits = splits
             self._dataset.split(splits)
         if n_images:
-            self.n_images = n_images
-            self._dataset.limit_images(n_images)
+            self._dataset.limit_images(n_images, balance_categories)
 
     def write(
         self,
@@ -104,21 +102,22 @@ class Converter:
             name: Name of the dataset.
             destination: Where to write the dataset.
                 Currently supported destinations:
-                - "local": Local directory
+                - "local_disk": Local disk
                 - "wandb": W&B artifacts
             **kwargs: Keyword arguments specific to the dataset_format.
         """
 
-        # if destination == "local" and path is None:
+        # if destination == "local_disk" and path is None:
         #     raise ValueError("Path must be specified when writing to local filesystem.")
 
         config = {}
         config["dataset"] = self._dataset
-        config["dataset_format"] = dataset_format
         config["name"] = name
+        config["path"] = kwargs["path"] if "path" in kwargs else None
 
         self.writer = writer_factory.get(dataset_format, **config)
-        self.writer.write(destination, **kwargs)
+        # self.writer.write(destination, **kwargs)
+        self.writer.write()
 
     @property
     def dataset(self) -> pd.DataFrame:

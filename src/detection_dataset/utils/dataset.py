@@ -66,48 +66,14 @@ class Dataset:
             }
         )
 
-    def split(self, splits: Tuple[Union[int, float]]) -> None:
-        """Splits the dataset into train, val and test.
-
-        Args:
-            splits: Tuple containing, depending on the type of the values (int or float):
-                - Proportion of images to include in the train, val and test splits, if specified as floats.
-                  The sum of the values in the tuple can be lower than 1, then the dataset size will be reduced.
-                - Number of images to include in the each split, if specified as integers.
-            In both cases, the original splits will be overwritten.
-        """
-
-        if len(splits) != 3:
-            raise ValueError(f"The splits must be a tuple of 3 elements, here it is: {splits}.")
-
-        data_by_image = self.data_by_image
-
-        if all([isinstance(x, float) for x in splits]):
-            assert sum(splits) <= 1, "The sum of the splits must lower than or equal to 1."
-            n_train = int(splits[0] * len(data_by_image))
-            n_val = int(n_train + splits[1] * len(data_by_image))
-            n_test = int(n_val + splits[2] * len(data_by_image))
-
-        elif all([isinstance(x, int) for x in self.splits]):
-            n_train, n_val, n_test = splits[0], splits[1], splits[2]
-
-        else:
-            raise ValueError("Splits must be either int or float")
-
-        data_train, data_val, data_test, _ = np.split(data_by_image, [n_train, n_val, n_test])
-        data_train["split"] = Split.train.value
-        data_val["split"] = Split.val.value
-        data_test["split"] = Split.test.value
-
-        data = pd.concat([data_train, data_val, data_test])
-        self.data = self.explode(data)
-
-    def limit_images(self, n_images: int) -> None:
+    def limit_images(self, n_images: int, balance_categories: bool) -> None:
         """Limits the number of images to n_images.
 
         Args:
             n_images: Number of images to include in the dataset.
                 The original proportion of images between splits will be respected.
+            balance_categories: Whether to balance the number of bboxes per category.
+                If False, the dataset will be randomly sampled.
         """
 
         if self.n_images > len(self.data):
@@ -117,25 +83,59 @@ class Dataset:
 
         split_data = []
         data_by_image = self.data_by_image
+
         for split in Split:
             if split.value in data_by_image.split.unique():
+                # if balance_categories:
+                #     sample_size = int((n_images * self.split_proportions[split.value]) / self.n_categories)
+                #     for category in self.category_names:
+                #         subset = data_by_image[
+                #             (data_by_image.split == split.value) #& (category in data_by_image.category)
+                #         ]
+                #         print(f"Sampling {sample_size} bboxes from {category}.")
+                #         print(len(subset))
+                #         split_data.append(subset.sample(n=sample_size, random_state=42))
+                # else:
+                #     pass
+                sample_size = int(n_images * self.split_proportions[split.value])
                 split_data.append(
-                    data_by_image.loc[data_by_image.split == split.value, :].sample(
-                        int(n_images * self.split_proportions[split.value]), random_state=42
-                    )
+                    data_by_image.loc[data_by_image.split == split.value, :].sample(sample_size, random_state=42)
                 )
 
         data = pd.concat(split_data)
         self.data = self.explode(data)
 
-    def explode(self, data: pd.DataFrame) -> pd.DataFrame:
-        """Converts a DataFrame arranged by image to a DataFrame arranged by bbox.
+    def split(self, splits: Tuple[Union[int, float]]) -> None:
+        """Splits the dataset into train, val and test.
 
         Args:
-            data: Dataframe to explode.
+            splits: Iterable containing the proportion of images to include in the train, val and test splits.
+                The sum of the values in the iterable must be equal to 1. The original splits will be overwritten.
         """
 
-        return data.explode(["bbox_id", "category_id", "area", "bbox"]).set_index(["image_id", "bbox_id"])
+        if len(splits) != 3:
+            raise ValueError(f"The splits must be a tuple of 3 elements, here it is: {splits}.")
+
+        if sum(splits) != 1:
+            raise ValueError(f"The sum of the proportion for each split must be equal to 1, here it is: {sum(splits)}.")
+
+        if not all([isinstance(x, float) for x in splits]):
+            raise TypeError("Splits must be either int or float, here it is: {}.".format(*[type(s) for s in splits]))
+
+        data_by_image = self.data_by_image.copy()
+
+        n_train = int(splits[0] * len(data_by_image))
+        n_val = int(n_train + splits[1] * len(data_by_image))
+        n_test = int(n_val + splits[2] * len(data_by_image))
+
+        data_by_image = data_by_image.sample(frac=1, random_state=42)
+        data_train, data_val, data_test, _ = np.split(data_by_image, [n_train, n_val, n_test])
+        data_train["split"] = Split.train.value
+        data_val["split"] = Split.val.value
+        data_test["split"] = Split.test.value
+
+        data = pd.concat([data_train, data_val, data_test])
+        self.data = self.explode(data)
 
     @property
     def data_by_image(self) -> pd.DataFrame:
@@ -146,6 +146,8 @@ class Dataset:
             {
                 "bbox_id": data["bbox_id"].apply(list),
                 "category_id": data["category_id"].apply(list),
+                "category": data["category"].apply(list),
+                "supercategory": data["supercategory"].apply(list),
                 "bbox": data["bbox"].apply(list),
                 "width": data["width"].first(),
                 "height": data["height"].first(),
@@ -155,6 +157,19 @@ class Dataset:
                 "split": data["split"].first(),
             }
         ).reset_index()
+
+    def explode(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Converts a DataFrame arranged by image to a DataFrame arranged by bbox.
+
+        This method reverses the effect of calling self.data_by_image.
+
+        Args:
+            data: Dataframe to explode.
+        """
+
+        return data.explode(["bbox_id", "category_id", "category", "supercategory", "area", "bbox"]).set_index(
+            ["image_id", "bbox_id"]
+        )
 
     @property
     def n_images(self) -> int:
@@ -187,7 +202,7 @@ class Dataset:
         )
 
     @property
-    def categorie_names(self) -> List[str]:
+    def category_names(self) -> List[str]:
         """Returns the categories names."""
 
         return self.categories.category.unique()

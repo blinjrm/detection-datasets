@@ -13,7 +13,7 @@ class MmdetWriter(BaseWriter):
 
         super().__init__(**kwargs)
 
-        self.final_data["bbox"] = [[bbox.to_voc() for bbox in bboxes] for bboxes in self.final_data.bbox]
+        self.data["bbox"] = [[bbox.to_voc() for bbox in bboxes] for bboxes in self.data.bbox]
 
     def write(self) -> None:
         """Writes the dataset to disk.
@@ -25,12 +25,10 @@ class MmdetWriter(BaseWriter):
             4. Write the images to disk for each split.
         """
 
-        data = self.final_data.copy()
-
-        for split in data.split.unique():
+        for split in self.data.split.unique():
             os.makedirs(os.path.join(self.dataset_dir, split, "images"))
 
-            split_data = data[data.split == split]
+            split_data = self.data[self.data.split == split]
             dataset = self._make_mmdet_data(split_data)
             self._save_dataset(dataset, split)
 

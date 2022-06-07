@@ -29,7 +29,7 @@ class YoloWriter(BaseWriter):
 
         super().__init__(**kwargs)
 
-        self.final_data["bbox"] = [[bbox.to_yolo() for bbox in bboxes] for bboxes in self.final_data.bbox]
+        self.data["bbox"] = [[bbox.to_yolo() for bbox in bboxes] for bboxes in self.data.bbox]
 
     def write(self) -> None:
         """Writes the dataset to disk.
@@ -40,14 +40,12 @@ class YoloWriter(BaseWriter):
             3. Write the images and labels.
         """
 
-        data = self.final_data.copy()
-
         self._write_yaml()
 
-        for split in data.split.unique():
+        for split in self.data.split.unique():
             self._make_dirs(split)
 
-            split_data = data[data.split == split]
+            split_data = self.data[self.data.split == split]
             self._write_images_labels_parallel(split_data)
 
     def _write_yaml(self) -> None:
