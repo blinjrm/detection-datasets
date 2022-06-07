@@ -1,42 +1,61 @@
+from typing import List, Tuple, Union
+
+import numpy as np
 import pandas as pd
+
+from detection_dataset.utils.enums import Split
 
 
 class Dataset:
-    def __init__(self, data: pd.DataFrame = None) -> None:
-        self.data = (
-            data
-            if data is not None
-            else pd.DataFrame(
-                columns=[
-                    "image_id",
-                    "bbox_id",
-                    "category_id",
-                    "category",
-                    "supercategory",
-                    "bbox",
-                    "width",
-                    "height",
-                    "area",
-                    "image_name",
-                    "image_path",
-                    "split",
-                ]
-            )
-        )
-        self._clean_dategories()
 
-    def concat(self, other: "Dataset") -> None:
-        self.data = pd.concat([self.data, other.data])
-        self._clean_dategories()
-        # return self
+    COLUMNS = [
+        "image_id",
+        "bbox_id",
+        "category_id",
+        "category",
+        "supercategory",
+        "bbox",
+        "width",
+        "height",
+        "area",
+        "image_name",
+        "image_path",
+        "split",
+    ]
+
+    data = pd.DataFrame(columns=COLUMNS).set_index(["image_id", "bbox_id"])
+
+    def __init__(self, data: pd.DataFrame = None) -> None:
+        """Initializes the dataset."""
+
+        if data is not None:
+            data = data[data.columns.intersection(self.COLUMNS)]
+            self.concat(data)
+
+    def concat(self, other_data: pd.DataFrame) -> None:
+        """Concatenates the existing data with new data."""
+
+        self.data = pd.concat([self.data, other_data])
 
     def map_categories(self, mapping: pd.DataFrame) -> None:
-        """Maps the categories to the new categories."""
+        """Maps the categories to the new categories.
+
+        Args:
+            category_mapping: A DataFrame mapping original categories to new categories.
+                Schema:
+                    - category_id: Original category id
+                    - category: Original category name
+                    - new_category_id: New category id
+                    - new_category: New category name
+        """
 
         mapping = mapping.loc[:, ["category_id", "category", "new_category_id", "new_category"]]
 
-        data = self.data.copy()
-        data = data.merge(mapping, on=["category_id", "category"], how="left", validate="m:1")
+        data = (
+            self.data.reset_index()
+            .merge(mapping, on=["category_id", "category"], how="left", validate="m:1")
+            .set_index(["image_id", "bbox_id"])
+        )
         data = data[data.new_category_id >= 0]
         self.data = data.rename(
             columns={
@@ -47,12 +66,135 @@ class Dataset:
             }
         )
 
-        self._clean_dategories()
+    def limit_images(self, n_images: int, balance_categories: bool) -> None:
+        """Limits the number of images to n_images.
 
-    def _clean_dategories(self) -> None:
+        Args:
+            n_images: Number of images to include in the dataset.
+                The original proportion of images between splits will be respected.
+            balance_categories: Whether to balance the number of bboxes per category.
+                If False, the dataset will be randomly sampled.
+        """
+
+        if self.n_images > len(self.data):
+            raise ValueError(
+                "The number of images to include in the dataset is greater than the number of images present."
+            )
+
+        split_data = []
+        data_by_image = self.data_by_image
+
+        for split in Split:
+            if split.value in data_by_image.split.unique():
+                # if balance_categories:
+                #     sample_size = int((n_images * self.split_proportions[split.value]) / self.n_categories)
+                #     for category in self.category_names:
+                #         subset = data_by_image[
+                #             (data_by_image.split == split.value) #& (category in data_by_image.category)
+                #         ]
+                #         print(f"Sampling {sample_size} bboxes from {category}.")
+                #         print(len(subset))
+                #         split_data.append(subset.sample(n=sample_size, random_state=42))
+                # else:
+                #     pass
+                sample_size = int(n_images * self.split_proportions[split.value])
+                split_data.append(
+                    data_by_image.loc[data_by_image.split == split.value, :].sample(sample_size, random_state=42)
+                )
+
+        data = pd.concat(split_data)
+        self.data = self.explode(data)
+
+    def split(self, splits: Tuple[Union[int, float]]) -> None:
+        """Splits the dataset into train, val and test.
+
+        Args:
+            splits: Iterable containing the proportion of images to include in the train, val and test splits.
+                The sum of the values in the iterable must be equal to 1. The original splits will be overwritten.
+        """
+
+        if len(splits) != 3:
+            raise ValueError(f"The splits must be a tuple of 3 elements, here it is: {splits}.")
+
+        if sum(splits) != 1:
+            raise ValueError(f"The sum of the proportion for each split must be equal to 1, here it is: {sum(splits)}.")
+
+        if not all([isinstance(x, float) for x in splits]):
+            raise TypeError("Splits must be either int or float, here it is: {}.".format(*[type(s) for s in splits]))
+
+        data_by_image = self.data_by_image.copy()
+
+        n_train = int(splits[0] * len(data_by_image))
+        n_val = int(n_train + splits[1] * len(data_by_image))
+        n_test = int(n_val + splits[2] * len(data_by_image))
+
+        data_by_image = data_by_image.sample(frac=1, random_state=42)
+        data_train, data_val, data_test, _ = np.split(data_by_image, [n_train, n_val, n_test])
+        data_train["split"] = Split.train.value
+        data_val["split"] = Split.val.value
+        data_test["split"] = Split.test.value
+
+        data = pd.concat([data_train, data_val, data_test])
+        self.data = self.explode(data)
+
+    @property
+    def data_by_image(self) -> pd.DataFrame:
+        """Returns the data grouped by image."""
+
+        data = self.data.reset_index().groupby("image_id")
+        return pd.DataFrame(
+            {
+                "bbox_id": data["bbox_id"].apply(list),
+                "category_id": data["category_id"].apply(list),
+                "category": data["category"].apply(list),
+                "supercategory": data["supercategory"].apply(list),
+                "bbox": data["bbox"].apply(list),
+                "width": data["width"].first(),
+                "height": data["height"].first(),
+                "area": data["area"].apply(list),
+                "image_name": data["image_name"].first(),
+                "image_path": data["image_path"].first(),
+                "split": data["split"].first(),
+            }
+        ).reset_index()
+
+    def explode(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Converts a DataFrame arranged by image to a DataFrame arranged by bbox.
+
+        This method reverses the effect of calling self.data_by_image.
+
+        Args:
+            data: Dataframe to explode.
+        """
+
+        return data.explode(["bbox_id", "category_id", "category", "supercategory", "area", "bbox"]).set_index(
+            ["image_id", "bbox_id"]
+        )
+
+    @property
+    def n_images(self) -> int:
+        """Returns the number of images in the dataset."""
+
+        return len(self.data)
+
+    @property
+    def splits(self) -> List[str]:
+        """Returns the splits of the dataset."""
+
+        return self.data.split.unique().tolist()
+
+    @property
+    def split_proportions(self) -> Tuple[float, float, float]:
+        """Returns the proportion of images in the train, val and test splits."""
+
+        data = self.data.copy()
+        return pd.DataFrame({s.value: [len(data[data.split == s.value]) / len(data)] for s in Split})
+
+    @property
+    def categories(self) -> None:
         """Creates a DataFrame containing the categories found in the data with their id."""
 
-        self.categories = (
+        return (
             self.data.loc[:, ["category_id", "category", "supercategory"]]
             .drop_duplicates()
             .sort_values("category_id")
@@ -60,5 +202,13 @@ class Dataset:
         )
 
     @property
-    def class_names(self) -> list:
+    def category_names(self) -> List[str]:
+        """Returns the categories names."""
+
         return self.categories.category.unique()
+
+    @property
+    def n_categories(self) -> int:
+        """Returns the number of categories."""
+
+        return self.categories.category.nunique()

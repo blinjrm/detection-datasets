@@ -1,7 +1,6 @@
-from __future__ import annotations
-
 import json
 import os
+from typing import Dict, Tuple
 
 import pandas as pd
 
@@ -11,12 +10,12 @@ from detection_dataset.utils import Dataset
 
 
 class CocoReader(BaseReader):
-    def __init__(self, path: str, splits: dict[str, tuple[str, str]]) -> None:
-        super().__init__(path, splits)
+    def __init__(self, path: str) -> None:
+        super().__init__(path)
 
-    def load(self) -> pd.DataFrame:
+    def load(self, splits: Dict[str, Tuple[str, str]], **kwargs) -> Dataset:
         annotation_dataframes = []
-        for split, (annotation_file, images_dir) in self.splits.items():
+        for split, (annotation_file, images_dir) in splits.items():
             images_path_prefix = os.path.join(self.path, images_dir)
 
             json = self._read_json(self.path, annotation_file)
@@ -33,7 +32,7 @@ class CocoReader(BaseReader):
             Bbox.from_coco(row.bbox, row.width, row.height) for _, row in annotation_by_bbox.iterrows()
         ]
 
-        return Dataset(data=annotation_by_bbox)
+        return annotation_by_bbox.set_index(["image_id", "bbox_id"])
 
     @staticmethod
     def _read_json(path: str, file: str) -> json:
