@@ -12,7 +12,7 @@ class MmdetWriter(BaseWriter):
         """Initializes the YoloWriter."""
 
         super().__init__(**kwargs)
-
+        self.format = "mmdet"
         self.data["bbox"] = [[bbox.to_voc() for bbox in bboxes] for bboxes in self.data.bbox]
 
     def write(self) -> None:
@@ -31,6 +31,9 @@ class MmdetWriter(BaseWriter):
             split_data = self.data[self.data.split == split]
             dataset = self._make_mmdet_data(split_data)
             self._save_dataset(dataset, split)
+
+        if self.destination == "wandb":
+            self.upload_to_wandb()
 
     def _make_mmdet_data(self, data_split: pd.DataFrame):
 

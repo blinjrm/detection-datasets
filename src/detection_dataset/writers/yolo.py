@@ -28,7 +28,7 @@ class YoloWriter(BaseWriter):
         """Initializes the YoloWriter."""
 
         super().__init__(**kwargs)
-
+        self.format = "yolo"
         self.data["bbox"] = [[bbox.to_yolo() for bbox in bboxes] for bboxes in self.data.bbox]
 
     def write(self) -> None:
@@ -47,6 +47,9 @@ class YoloWriter(BaseWriter):
 
             split_data = self.data[self.data.split == split]
             self._write_images_labels_parallel(split_data)
+
+        if self.destination == "wandb":
+            self.upload_to_wandb()
 
     def _write_yaml(self) -> None:
         """Writes the YAML file for the dataset.

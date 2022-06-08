@@ -3,6 +3,7 @@ from typing import Dict, Optional, Tuple, Union
 import pandas as pd
 
 from detection_dataset.utils import Dataset, reader_factory, writer_factory
+from detection_dataset.utils.constants import DEFAULT_DATASET_DIR
 
 
 class Converter:
@@ -107,17 +108,18 @@ class Converter:
             **kwargs: Keyword arguments specific to the dataset_format.
         """
 
-        # if destination == "local_disk" and path is None:
-        #     raise ValueError("Path must be specified when writing to local filesystem.")
+        if destination == "local_disk" and not kwargs.get("path", None):
+            raise ValueError("Path must be specified when writing to local filesystem.")
 
         config = {}
         config["dataset"] = self._dataset
         config["name"] = name
-        config["path"] = kwargs["path"] if "path" in kwargs else None
+        config["destination"] = destination
+        config["path"] = kwargs["path"] if "path" in kwargs else DEFAULT_DATASET_DIR
 
         self.writer = writer_factory.get(dataset_format, **config)
-        # self.writer.write(destination, **kwargs)
-        self.writer.write()
+        self.writer.write(destination, **kwargs)
+        # self.writer.write()
 
     @property
     def dataset(self) -> pd.DataFrame:

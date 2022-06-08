@@ -32,3 +32,6 @@ poetry.lock
 
 # Jupyter notebook
 .ipynb_checkpoints/
+
+# W&B
+wandb/
