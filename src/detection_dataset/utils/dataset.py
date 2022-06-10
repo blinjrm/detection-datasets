@@ -66,14 +66,12 @@ class Dataset:
             }
         )
 
-    def limit_images(self, n_images: int, balance_categories: bool) -> None:
+    def limit_images(self, n_images: int) -> None:
         """Limits the number of images to n_images.
 
         Args:
             n_images: Number of images to include in the dataset.
                 The original proportion of images between splits will be respected.
-            balance_categories: Whether to balance the number of bboxes per category.
-                If False, the dataset will be randomly sampled.
         """
 
         if self.n_images > len(self.data):
@@ -86,17 +84,6 @@ class Dataset:
 
         for split in Split:
             if split.value in data_by_image.split.unique():
-                # if balance_categories:
-                #     sample_size = int((n_images * self.split_proportions[split.value]) / self.n_categories)
-                #     for category in self.category_names:
-                #         subset = data_by_image[
-                #             (data_by_image.split == split.value) #& (category in data_by_image.category)
-                #         ]
-                #         print(f"Sampling {sample_size} bboxes from {category}.")
-                #         print(len(subset))
-                #         split_data.append(subset.sample(n=sample_size, random_state=42))
-                # else:
-                #     pass
                 sample_size = int(n_images * self.split_proportions[split.value])
                 split_data.append(
                     data_by_image.loc[data_by_image.split == split.value, :].sample(sample_size, random_state=42)
@@ -130,16 +117,20 @@ class Dataset:
 
         data_by_image = data_by_image.sample(frac=1, random_state=42)
         data_train, data_val, data_test, _ = np.split(data_by_image, [n_train, n_val, n_test])
-        data_train["split"] = Split.train.value
-        data_val["split"] = Split.val.value
-        data_test["split"] = Split.test.value
+        data_train["split"] = Split.TRAIN.value
+        data_val["split"] = Split.VAL.value
+        data_test["split"] = Split.TEST.value
 
         data = pd.concat([data_train, data_val, data_test])
         self.data = self.explode(data)
 
     @property
     def data_by_image(self) -> pd.DataFrame:
-        """Returns the data grouped by image."""
+        """Returns the data grouped by image.
+
+        Returns:
+            A DataFrame grouped by image, meaning that each may contain data related to multiple bboxes.
+        """
 
         data = self.data.reset_index().groupby("image_id")
         return pd.DataFrame(
@@ -165,6 +156,9 @@ class Dataset:
 
         Args:
             data: Dataframe to explode.
+
+        Returns:
+            A DataFrame arranged by bbox instead of images.
         """
 
         return data.explode(["bbox_id", "category_id", "category", "supercategory", "area", "bbox"]).set_index(
@@ -173,19 +167,31 @@ class Dataset:
 
     @property
     def n_images(self) -> int:
-        """Returns the number of images in the dataset."""
+        """Returns the number of images in the dataset.
+
+        Returns:
+            The number of images in the dataset.
+        """
 
         return len(self.data)
 
     @property
     def splits(self) -> List[str]:
-        """Returns the splits of the dataset."""
+        """Returns the splits of the dataset.
+
+        Returns:
+            The splits present in the dataset.
+        """
 
         return self.data.split.unique().tolist()
 
     @property
     def split_proportions(self) -> Tuple[float, float, float]:
-        """Returns the proportion of images in the train, val and test splits."""
+        """Returns the proportion of images in the train, val and test splits.
+
+        Returns:
+            The proportion of images in the train, val and test splits.
+        """
 
         data = self.data.copy()
         return pd.DataFrame({s.value: [len(data[data.split == s.value]) / len(data)] for s in Split})
@@ -203,12 +209,20 @@ class Dataset:
 
     @property
     def category_names(self) -> List[str]:
-        """Returns the categories names."""
+        """Returns the categories names.
+
+        Returns:
+            The categories names.
+        """
 
         return self.categories.category.unique()
 
     @property
     def n_categories(self) -> int:
-        """Returns the number of categories."""
+        """Returns the number of categories.
+
+        Returns:
+            The number of categories.
+        """
 
         return self.categories.category.nunique()

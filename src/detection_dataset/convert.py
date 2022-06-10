@@ -1,9 +1,10 @@
-from typing import Dict, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 
 from detection_dataset.utils import Dataset, reader_factory, writer_factory
 from detection_dataset.utils.constants import DEFAULT_DATASET_DIR
+from detection_dataset.utils.enums import Destinations
 
 
 class Converter:
@@ -42,17 +43,15 @@ class Converter:
         config = {}
         config["path"] = path
 
-        self.reader = reader_factory.get(dataset_format, **config)
-        data = self.reader.load(**kwargs)
+        reader = reader_factory.get(dataset_format, **config)
+        data = reader.load(**kwargs)
         self._dataset.concat(data)
-        # self.splits = self._dataset.read_splits()
 
     def transform(
         self,
         category_mapping: Optional[pd.DataFrame] = None,
         n_images: Optional[int] = None,
         splits: Optional[Tuple[Union[int, float]]] = None,
-        balance_categories: bool = False,
     ) -> None:
         """Transforms the dataset.
 
@@ -68,24 +67,21 @@ class Converter:
             splits: Iterable containing the proportion of images to include in the train, val and test splits.
                 The sum of the values in the iterable must be equal to 1. The original splits will be overwritten.
                 Defaults to None.
-            balance_categories: Whether to balance the number of bboxes per category when reducing the dataset to given
-                splits or n_images. If False, the dataset will be randomly sampled. Defaults to False.
         """
 
-        self.balance_categories = balance_categories
         if category_mapping is not None:
             self.category_mapping = category_mapping
             self._dataset.map_categories(category_mapping)
         if splits:
             self._dataset.split(splits)
         if n_images:
-            self._dataset.limit_images(n_images, balance_categories)
+            self._dataset.limit_images(n_images)
 
     def write(
         self,
         dataset_format: str,
         name: str,
-        destination: str,
+        destinations: Union[str, List[str]],
         **kwargs: Dict[str, str],
     ) -> None:
         """Writes the dataset.
@@ -101,32 +97,44 @@ class Converter:
                 - "mmdet": MMDET internal format, see:
                     https://mmdetection.readthedocs.io/en/latest/tutorials/customize_dataset.html#reorganize-new-data-format-to-middle-format
             name: Name of the dataset.
-            destination: Where to write the dataset.
+            destinations: Where to write the dataset.
                 Currently supported destinations:
                 - "local_disk": Local disk
                 - "wandb": W&B artifacts
             **kwargs: Keyword arguments specific to the dataset_format.
         """
 
-        if destination == "local_disk" and not kwargs.get("path", None):
+        if not isinstance(destinations, list):
+            destinations = [destinations]
+
+        if Destinations.LOCAL_DISK in destinations and not kwargs.get("path", None):
             raise ValueError("Path must be specified when writing to local filesystem.")
 
         config = {}
         config["dataset"] = self._dataset
         config["name"] = name
-        config["destination"] = destination
+        config["destinations"] = destinations
         config["path"] = kwargs["path"] if "path" in kwargs else DEFAULT_DATASET_DIR
 
-        self.writer = writer_factory.get(dataset_format, **config)
-        self.writer.write(destination, **kwargs)
-        # self.writer.write()
+        writer = writer_factory.get(dataset_format, **config)
+        writer.write()
 
     @property
-    def dataset(self) -> pd.DataFrame:
+    def dataset(self) -> Dataset:
+        """Access the class dataset.
+
+        Returns:
+            A dataset object containing the data.
+        """
+
+        return self._dataset
+
+    @property
+    def data(self) -> Dataset:
         """Access the class data.
 
         Returns:
             A pandas DataFrame containing the dataset.
         """
 
-        return self._dataset
+        return self._dataset.data

@@ -8,14 +8,16 @@ from detection_dataset.writers import BaseWriter
 
 
 class MmdetWriter(BaseWriter):
+
+    format = "mmdet"
+
     def __init__(self, **kwargs) -> None:
         """Initializes the YoloWriter."""
 
         super().__init__(**kwargs)
-        self.format = "mmdet"
         self.data["bbox"] = [[bbox.to_voc() for bbox in bboxes] for bboxes in self.data.bbox]
 
-    def write(self) -> None:
+    def write_to_disk(self) -> None:
         """Writes the dataset to disk.
 
         For the MMDET format, the associated steps are:
@@ -31,9 +33,6 @@ class MmdetWriter(BaseWriter):
             split_data = self.data[self.data.split == split]
             dataset = self._make_mmdet_data(split_data)
             self._save_dataset(dataset, split)
-
-        if self.destination == "wandb":
-            self.upload_to_wandb()
 
     def _make_mmdet_data(self, data_split: pd.DataFrame):
 
