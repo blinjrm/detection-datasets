@@ -61,13 +61,21 @@ class BaseWriter(ABC):
         try:
             run = wandb.init(
                 project="detection-dataset",
-                name="dataset_upload",
-                resume=True,
                 settings=wandb.Settings(start_method="fork"),
             )
 
             # Log the entire dataset
-            artifact = wandb.Artifact(self.name, type="dataset")
+            artifact = wandb.Artifact(
+                self.name,
+                type="dataset",
+                metadata={
+                    "format": self.format,
+                    "n_images": self.n_images,
+                    "n_classes": self.n_classes,
+                    "class_names": self.class_names,
+                    "split_proportions": self.split_proportions,
+                },
+            )
             artifact.add_dir(self.dataset_dir)
 
             # Log a table for dataset visualization
