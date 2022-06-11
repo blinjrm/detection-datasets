@@ -33,6 +33,8 @@ class BaseWriter(ABC):
         self.dataset_dir = os.path.join(self.path, self.name)
         self.class_names = dataset.category_names
         self.n_classes = dataset.n_categories
+        self.n_images = dataset.n_images
+        self.split_proportions = dataset.split_proportions
 
     def write(self) -> None:
         """Factory method for writing the dataset to its destination(s)."""
@@ -73,13 +75,14 @@ class BaseWriter(ABC):
             # artifact.add_file(table, name='table.csv')
 
             # Upload to W&B
-            run.log_artifact(artifact, aliases=[self.format])
+            run.log_artifact(artifact, aliases=[self.format, str(self.n_images)])
 
         except Exception as e:
-            print(e)
+            self._delete_local_dataset()
+            raise e
 
         # Delete local dataset
-        if Destinations.LOCAL_DISK not in self.destination:
+        if Destinations.LOCAL_DISK not in self.destinations:
             self._delete_local_dataset()
 
     def _make_wandb_table(self) -> wandb.Table:

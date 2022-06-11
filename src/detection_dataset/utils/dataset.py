@@ -173,7 +173,7 @@ class Dataset:
             The number of images in the dataset.
         """
 
-        return len(self.data)
+        return len(self.data_by_image)
 
     @property
     def splits(self) -> List[str]:

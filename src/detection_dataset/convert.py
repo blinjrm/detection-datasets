@@ -107,14 +107,17 @@ class Converter:
         if not isinstance(destinations, list):
             destinations = [destinations]
 
-        if Destinations.LOCAL_DISK in destinations and not kwargs.get("path", None):
-            raise ValueError("Path must be specified when writing to local filesystem.")
-
         config = {}
         config["dataset"] = self._dataset
         config["name"] = name
         config["destinations"] = destinations
-        config["path"] = kwargs["path"] if "path" in kwargs else DEFAULT_DATASET_DIR
+
+        if Destinations.LOCAL_DISK in destinations:
+            if not kwargs.get("path", None):
+                raise ValueError("Path must be specified when writing to local filesystem.")
+            config["path"] = kwargs["path"]
+        else:
+            config["path"] = DEFAULT_DATASET_DIR
 
         writer = writer_factory.get(dataset_format, **config)
         writer.write()
