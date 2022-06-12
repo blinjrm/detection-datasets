@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 from typing import Dict, List
@@ -65,8 +66,9 @@ class MmdetWriter(BaseWriter):
         source_images = dataset["source_imges"]
 
         # Labels
-        with open(os.path.join(split_path, "annotation.jsonl"), "w") as f:
-            f.write(str(mmdet_data))
+        file = os.path.join(split_path, "annotation.json")
+        with open(file, "w", encoding="utf-8") as f:
+            json.dump(mmdet_data, f, ensure_ascii=False, indent=4)
 
         # Images
         for mmdet_data_image, original_image_path in zip(mmdet_data, source_images):
