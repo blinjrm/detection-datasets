@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 from typing import Dict, List
@@ -8,14 +9,16 @@ from detection_dataset.writers import BaseWriter
 
 
 class MmdetWriter(BaseWriter):
+
+    format = "mmdet"
+
     def __init__(self, **kwargs) -> None:
         """Initializes the YoloWriter."""
 
         super().__init__(**kwargs)
-
         self.data["bbox"] = [[bbox.to_voc() for bbox in bboxes] for bboxes in self.data.bbox]
 
-    def write(self) -> None:
+    def write_to_disk(self) -> None:
         """Writes the dataset to disk.
 
         For the MMDET format, the associated steps are:
@@ -63,8 +66,9 @@ class MmdetWriter(BaseWriter):
         source_images = dataset["source_imges"]
 
         # Labels
-        with open(os.path.join(split_path, "annotation.jsonl"), "w") as f:
-            f.write(str(mmdet_data))
+        file = os.path.join(split_path, "annotation.json")
+        with open(file, "w", encoding="utf-8") as f:
+            json.dump(mmdet_data, f, ensure_ascii=False, indent=4)
 
         # Images
         for mmdet_data_image, original_image_path in zip(mmdet_data, source_images):

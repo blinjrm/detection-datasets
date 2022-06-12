@@ -24,14 +24,15 @@ names: [{class_names}]
 class YoloWriter(BaseWriter):
     """Writes a dataset to a directory in the YOLO format."""
 
+    format = "yolo"
+
     def __init__(self, **kwargs) -> None:
         """Initializes the YoloWriter."""
 
         super().__init__(**kwargs)
-
         self.data["bbox"] = [[bbox.to_yolo() for bbox in bboxes] for bboxes in self.data.bbox]
 
-    def write(self) -> None:
+    def write_to_disk(self) -> None:
         """Writes the dataset to disk.
 
         For the YOLO format, the associated steps are:
