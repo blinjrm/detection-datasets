@@ -1,0 +1,16 @@
+site_name: detection-dataset
+
+theme:
+  name: material
+  palette:
+    primary: teal
+
+plugins:
+  - mkdocstrings
+
+nav:
+  - Detection-dataset: index.md
+  - tutorials.md
+  - How-to guides: how-to-guides.md
+  - reference.md
+  - explanation.md
