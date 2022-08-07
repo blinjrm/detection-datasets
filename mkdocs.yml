@@ -2,15 +2,45 @@ site_name: detection-dataset
 
 theme:
   name: material
+
   palette:
-    primary: teal
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: blue
+      accent: pink
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+
+    # Palette toggle for light mode
+    - scheme: default
+      primary: blue
+      accent: pink
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+
+  features:
+    - navigation.tabs
 
 plugins:
   - mkdocstrings
+  - section-index
+  - search
 
 nav:
   - Detection-dataset: index.md
   - tutorials.md
   - How-to guides: how-to-guides.md
-  - reference.md
+  - Reference:
+      - reference/index.md
+      - Converter: reference/converter.md
+      - Bbox: reference/bbox.md
+      - Readers: reference/readers.md
   - explanation.md
+
+markdown_extensions:
+  - toc:
+      permalink: "#"
+
+repo_url: https://github.com/blinjrm/detection-dataset
