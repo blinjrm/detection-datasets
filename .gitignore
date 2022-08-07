@@ -35,3 +35,6 @@ poetry.lock
 
 # W&B
 wandb/
+
+# MkDocs documentation
+site/
