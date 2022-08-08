@@ -5,19 +5,22 @@ on:
     branches:
       - main
 
+permissions:
+  repository-projects: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
-      - name: Install poetry
-        run: pipx install poetry
       - name: Set up python
         uses: actions/setup-python@v4
         with:
           python-version: 3.8
           cache: "poetry"
+      - name: Install poetry
+        run: pipx install poetry
       - name: Install dependencies
         run: poetry install
       - name: Deploy docs
