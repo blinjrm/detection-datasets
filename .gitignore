@@ -27,9 +27,6 @@ dmypy.json
 # MacOS
 .DS_Store
 
-# Poetry
-poetry.lock
-
 # Jupyter notebook
 .ipynb_checkpoints/
 
