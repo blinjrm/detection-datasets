@@ -4,28 +4,28 @@ on:
   pull_request:
 
 jobs:
-  pre-commit:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
+        with:
+          python-version: 3.7
       - uses: pre-commit/action@v3.0.0
 
-  # lint:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Check out repository
-  #       uses: actions/checkout@v3
-  #     - name: Install poetry
-  #       run: pipx install poetry
-  #     - name: Set up python
-  #       uses: actions/setup-python@v4
-  #       with:
-  #         python-version: "3.9"
-  #         cache: "poetry"
-  #     - name: Install poetry
-  #       run: poetry install
-  #     # - name: Run tests
-  #     # un: poetry run pytest
-  #     - name: Pre-commit
-  #       uses: pre-commit/action@v3.0.0
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Install poetry
+        uses: snok/install-poetry@v1
+      - name: Set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+          cache: "poetry"
+      - name: Install poetry
+        run: poetry install
+      # - name: Run tests
+      # run: poetry run pytest
