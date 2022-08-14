@@ -45,3 +45,4 @@ markdown_extensions:
       permalink: "#"
 
 repo_url: https://github.com/blinjrm/detection-dataset
+edit_uri: ""
