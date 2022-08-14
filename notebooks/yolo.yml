@@ -1,8 +1,0 @@
-path: my_path
-train: images/train
-val: images/val
-test: images/test
-
-# Classes
-nc: n_classes
-names: [Class_names]
