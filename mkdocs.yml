@@ -2,6 +2,7 @@ site_name: detection-dataset
 
 theme:
   name: material
+  logo: assets/logo.png
 
   palette:
     # Palette toggle for dark mode
