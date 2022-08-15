@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "detection-dataset"
+name = "detection_dataset"
 version = "0.1.0"
 description = "Easily convert datasets between different formats for object detection"
 authors = ["Jerome Blin <jerome@grover.com>"]

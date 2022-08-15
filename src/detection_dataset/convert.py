@@ -75,7 +75,7 @@ class Converter:
         if splits:
             self._dataset.split(splits)
         if n_images:
-            self._dataset.limit_images(n_images)
+            self._dataset.select(n_images)
 
     def write(
         self,
