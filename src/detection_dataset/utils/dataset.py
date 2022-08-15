@@ -267,7 +267,7 @@ class Dataset:
 
             for _, row in data.iterrows():
                 objects = {}
-                objects["id"] = row["category_id"]
+                objects["id"] = row["bbox_id"]
                 objects["category"] = row["category"]
                 objects["bbox"] = row["bbox"]
                 objects["area"] = row["area"]
@@ -292,7 +292,7 @@ class Dataset:
                     "objects": Sequence(
                         {
                             "area": Value(dtype="int64"),
-                            "bbox": Sequence(feature=Value(dtype="float64"), length=-1),
+                            "bbox": Sequence(feature=Value(dtype="float64"), length=4),
                             "category": ClassLabel(names=self.category_names),
                             "id": Value(dtype="int64"),
                         }
