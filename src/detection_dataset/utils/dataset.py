@@ -261,27 +261,28 @@ class Dataset:
         data = self.data_by_image
         data.bbox = [[bbox.to_coco() for bbox in bboxes] for bboxes in data.bbox]
 
-        for split in self.data.split.unique():
+        for split in data.split.unique():
+            split_data = data[data.split == split]
 
-            hf_data = []
+            images_data = []
 
-            for _, row in data.iterrows():
+            for _, row in split_data.iterrows():
                 objects = {}
                 objects["id"] = row["bbox_id"]
                 objects["category"] = row["category"]
                 objects["bbox"] = row["bbox"]
                 objects["area"] = row["area"]
 
-                data = {}
-                data["image_id"] = row["image_id"]
-                data["image"] = row["image_path"]
-                data["width"] = row["width"]
-                data["height"] = row["height"]
-                data["objects"] = objects
+                image = {}
+                image["image_id"] = row["image_id"]
+                image["image"] = row["image_path"]
+                image["width"] = row["width"]
+                image["height"] = row["height"]
+                image["objects"] = objects
 
-                hf_data.append(data)
+                images_data.append(image)
 
-            df = pd.DataFrame.from_dict(hf_data)
+            df = pd.DataFrame.from_dict(images_data)
 
             features = Features(
                 {
@@ -303,4 +304,4 @@ class Dataset:
             hf = HfDataset.from_pandas(df=df, features=features, split=split)
             hf_dataset_dict[split] = hf
 
-        hf_dataset_dict
+        return hf_dataset_dict
