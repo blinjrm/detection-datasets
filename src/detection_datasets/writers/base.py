@@ -55,9 +55,6 @@ class BaseWriter(ABC):
     def upload_to_wandb(self) -> None:
         """Uploads the dataset to W&B artifacts."""
 
-        # import inspect
-        # inspect.signature(wandb.init)
-
         try:
             run = wandb.init(
                 project="detection-dataset",

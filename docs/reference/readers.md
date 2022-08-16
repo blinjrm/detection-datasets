@@ -1,3 +1,3 @@
-::: detection_dataset.readers.base.BaseReader
+::: detection_datasets.readers.base.BaseReader
 
-::: detection_dataset.readers.coco.CocoReader
+::: detection_datasets.readers.coco.CocoReader
