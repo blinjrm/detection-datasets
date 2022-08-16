@@ -1,7 +1,7 @@
-# Welcome to detection-dataset
+# Welcome to detection-datasets
 
 This site contains the project documentation for the
-`detection-dataset` project that makes it easy to convert
+`detection-datasets` project that makes it easy to convert
 datasets between different formats for object detection.
 
 ## Table Of Contents
