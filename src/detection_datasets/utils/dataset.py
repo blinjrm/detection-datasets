@@ -3,7 +3,7 @@ from typing import List, Tuple, Union
 import numpy as np
 import pandas as pd
 
-from detection_dataset.utils.enums import Split
+from detection_datasets.utils.enums import Split
 
 
 class Dataset:
@@ -66,7 +66,7 @@ class Dataset:
             }
         )
 
-    def limit_images(self, n_images: int) -> None:
+    def select(self, n_images: int) -> None:
         """Limits the number of images to n_images.
 
         Args:
@@ -86,8 +86,30 @@ class Dataset:
             if split.value in data_by_image.split.unique():
                 sample_size = int(n_images * self.split_proportions[split.value])
                 split_data.append(
-                    data_by_image.loc[data_by_image.split == split.value, :].sample(sample_size, random_state=42)
+                    data_by_image.loc[data_by_image.split == split.value, :]
+                    .sample(frac=sample_size, random_state=42)
+                    .reset_index(drop=True)
                 )
+
+        data = pd.concat(split_data)
+        self.data = self.explode(data)
+
+    def shuffle(self, seed: int = 42) -> None:
+        """Shuffles the dataset.
+
+        Args:
+            seed: Random seed.
+        """
+
+        split_data = []
+        data_by_image = self.data_by_image
+
+        for split in Split:
+            split_data.append(
+                data_by_image.loc[data_by_image.split == split.value, :]
+                .sample(frac=1, random_state=seed)
+                .reset_index(drop=True)
+            )
 
         data = pd.concat(split_data)
         self.data = self.explode(data)
@@ -215,7 +237,7 @@ class Dataset:
             The categories names.
         """
 
-        return self.categories.category.unique()
+        return list(self.categories.category.unique())
 
     @property
     def n_categories(self) -> int:
@@ -226,3 +248,60 @@ class Dataset:
         """
 
         return self.categories.category.nunique()
+
+    def to_hf_dataset(self) -> "Dataset":
+        try:
+            from datasets import ClassLabel
+            from datasets import Dataset as HfDataset
+            from datasets import DatasetDict, Features, Image, Sequence, Value
+        except ImportError:
+            raise ImportError("The `datasets` package is missing. Use `pip install detection-dataset[huggingface]`.")
+
+        hf_dataset_dict = DatasetDict()
+        data = self.data_by_image
+        data.bbox = [[bbox.to_coco() for bbox in bboxes] for bboxes in data.bbox]
+
+        for split in data.split.unique():
+            split_data = data[data.split == split]
+
+            images_data = []
+
+            for _, row in split_data.iterrows():
+                objects = {}
+                objects["id"] = row["bbox_id"]
+                objects["category"] = row["category"]
+                objects["bbox"] = row["bbox"]
+                objects["area"] = row["area"]
+
+                image = {}
+                image["image_id"] = row["image_id"]
+                image["image"] = row["image_path"]
+                image["width"] = row["width"]
+                image["height"] = row["height"]
+                image["objects"] = objects
+
+                images_data.append(image)
+
+            df = pd.DataFrame.from_dict(images_data)
+
+            features = Features(
+                {
+                    "image_id": Value(dtype="int64"),
+                    "image": Image(decode=True),
+                    "width": Value(dtype="int64"),
+                    "height": Value(dtype="int64"),
+                    "objects": Sequence(
+                        {
+                            "area": Value(dtype="int64"),
+                            "bbox": Sequence(feature=Value(dtype="float64"), length=4),
+                            "category": ClassLabel(names=self.category_names),
+                            "id": Value(dtype="int64"),
+                        }
+                    ),
+                }
+            )
+
+            hf = HfDataset.from_pandas(df=df, features=features, split=split)
+            hf_dataset_dict[split] = hf
+
+        return hf_dataset_dict

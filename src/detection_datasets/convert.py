@@ -2,9 +2,9 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 
-from detection_dataset.utils import Dataset, reader_factory, writer_factory
-from detection_dataset.utils.constants import DEFAULT_DATASET_DIR
-from detection_dataset.utils.enums import Destinations
+from detection_datasets.utils import Dataset, reader_factory, writer_factory
+from detection_datasets.utils.constants import DEFAULT_DATASET_DIR
+from detection_datasets.utils.enums import Destinations
 
 
 class Converter:
@@ -75,7 +75,7 @@ class Converter:
         if splits:
             self._dataset.split(splits)
         if n_images:
-            self._dataset.limit_images(n_images)
+            self._dataset.select(n_images)
 
     def write(
         self,

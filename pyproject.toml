@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "detection-dataset"
+name = "detection_datasets"
 version = "0.1.0"
 description = "Easily convert datasets between different formats for object detection"
 authors = ["Jerome Blin <jerome@grover.com>"]
@@ -12,7 +12,7 @@ classifiers = [
     "Operating System :: OS Independent",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-packages = [{ include = "detection_dataset", from = "src" }]
+packages = [{ include = "detection_datasets", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.8"

@@ -5,7 +5,7 @@ from typing import Dict, List
 
 import pandas as pd
 
-from detection_dataset.writers import BaseWriter
+from detection_datasets.writers import BaseWriter
 
 
 class MmdetWriter(BaseWriter):
@@ -38,7 +38,7 @@ class MmdetWriter(BaseWriter):
     def _make_mmdet_data(self, data_split: pd.DataFrame):
 
         mmdet_data = []
-        source_imges = []
+        source_images = []
 
         for _, row in data_split.iterrows():
             annotations = {}
@@ -52,9 +52,9 @@ class MmdetWriter(BaseWriter):
             data["ann"] = annotations
 
             mmdet_data.append(data)
-            source_imges.append(row["image_path"])
+            source_images.append(row["image_path"])
 
-            dataset = {"mmdet_data": mmdet_data, "source_imges": source_imges}
+            dataset = {"mmdet_data": mmdet_data, "source_images": source_images}
 
         return dataset
 
@@ -63,7 +63,7 @@ class MmdetWriter(BaseWriter):
 
         split_path = os.path.join(self.dataset_dir, split)
         mmdet_data = dataset["mmdet_data"]
-        source_images = dataset["source_imges"]
+        source_images = dataset["source_images"]
 
         # Labels
         file = os.path.join(split_path, "annotation.json")
