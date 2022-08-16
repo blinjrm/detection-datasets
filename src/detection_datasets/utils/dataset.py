@@ -3,7 +3,7 @@ from typing import List, Tuple, Union
 import numpy as np
 import pandas as pd
 
-from detection_dataset.utils.enums import Split
+from detection_datasets.utils.enums import Split
 
 
 class Dataset:

@@ -5,7 +5,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 from ruamel.yaml import YAML
 
-from detection_dataset.writers import BaseWriter
+from detection_datasets.writers import BaseWriter
 
 yaml = YAML()
 

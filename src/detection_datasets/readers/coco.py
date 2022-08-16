@@ -4,9 +4,9 @@ from typing import Dict, Tuple
 
 import pandas as pd
 
-from detection_dataset.bbox import Bbox
-from detection_dataset.readers import BaseReader
-from detection_dataset.utils import Dataset
+from detection_datasets.bbox import Bbox
+from detection_datasets.readers import BaseReader
+from detection_datasets.utils import Dataset
 
 
 class CocoReader(BaseReader):

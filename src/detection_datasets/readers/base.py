@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from detection_dataset.utils import Dataset
+from detection_datasets.utils import Dataset
 
 
 class BaseReader(ABC):

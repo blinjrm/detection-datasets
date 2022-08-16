@@ -5,8 +5,8 @@ from typing import List
 
 import wandb
 
-from detection_dataset.utils import Dataset
-from detection_dataset.utils.enums import Destinations
+from detection_datasets.utils import Dataset
+from detection_datasets.utils.enums import Destinations
 
 
 class BaseWriter(ABC):

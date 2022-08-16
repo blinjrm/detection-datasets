@@ -1,7 +1,7 @@
 from typing import Union
 
-from detection_dataset.readers import BaseReader, CocoReader
-from detection_dataset.writers import BaseWriter, MmdetWriter, YoloWriter
+from detection_datasets.readers import BaseReader, CocoReader
+from detection_datasets.writers import BaseWriter, MmdetWriter, YoloWriter
 
 
 class Factory:

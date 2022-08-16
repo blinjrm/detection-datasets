@@ -5,7 +5,7 @@ from typing import Dict, List
 
 import pandas as pd
 
-from detection_dataset.writers import BaseWriter
+from detection_datasets.writers import BaseWriter
 
 
 class MmdetWriter(BaseWriter):
