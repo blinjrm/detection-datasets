@@ -1,1 +1,1 @@
-::: detection_dataset.bbox.Bbox
+::: detection_datasets.bbox.Bbox

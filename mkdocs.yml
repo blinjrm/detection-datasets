@@ -1,4 +1,4 @@
-site_name: detection-dataset
+site_name: detection-datasets
 
 theme:
   name: material
@@ -44,5 +44,5 @@ markdown_extensions:
   - toc:
       permalink: "#"
 
-repo_url: https://github.com/blinjrm/detection-dataset
+repo_url: https://github.com/blinjrm/detection-datasets
 edit_uri: ""
