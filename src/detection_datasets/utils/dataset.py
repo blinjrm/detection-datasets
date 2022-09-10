@@ -249,7 +249,16 @@ class Dataset:
 
         return self.categories.category.nunique()
 
-    def to_hf_dataset(self) -> "Dataset":
+    def to_hf_dataset(self):  # TODO: add return type
+        """Converts the dataset to a hf.dataset.DatasetDict object.
+
+        That dataset can be handled as any huggingface dataset,
+        and can therefor be uploaded to the huggingface hub.
+
+        Returns:
+            A hf.dataset.Dataset object.
+        """
+
         try:
             from datasets import ClassLabel
             from datasets import Dataset as HfDataset
@@ -305,3 +314,29 @@ class Dataset:
             hf_dataset_dict[split] = hf
 
         return hf_dataset_dict
+
+    def from_hf_dataset(self, ds) -> pd.DataFrame:  # TODO: add DatasetDict type annotation
+        """Read data from a Hugging Face DatasetDict instance.
+
+        If the Dataset already contains data, this method will concatenate the new data passer as an argument to that
+        existing data.
+
+        Args:
+            ds: dataset to read as Pandas DataFrame.
+        """
+
+        df_splits = []
+        for key in ds.keys():
+            df_split = ds[key].to_pandas()
+            df_split["split"] = key
+            df_splits.append(df_split)
+
+        df = pd.concat(df_splits)
+
+        objects = pd.json_normalize(df["objects"])
+        objects = objects.rename(columns={"id": "bbox_id"})
+
+        final_df = df.join(objects)
+        final_df = final_df.drop(columns=["objects"])
+
+        self.concat(other_data=final_df)
