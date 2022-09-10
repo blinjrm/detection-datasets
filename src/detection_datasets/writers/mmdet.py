@@ -18,7 +18,7 @@ class MmdetWriter(BaseWriter):
         super().__init__(**kwargs)
         self.data["bbox"] = [[bbox.to_voc() for bbox in bboxes] for bboxes in self.data.bbox]
 
-    def write_to_disk(self) -> None:
+    def write(self) -> None:
         """Writes the dataset to disk.
 
         For the MMDET format, the associated steps are:

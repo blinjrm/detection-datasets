@@ -13,7 +13,7 @@ class CocoReader(BaseReader):
         super().__init__(path)
         self.splits = splits
 
-    def load(self) -> pd.DataFrame():
+    def read(self) -> pd.DataFrame():
         annotation_dataframes = []
         for split, (annotation_file, images_dir) in self.splits.items():
             images_path_prefix = os.path.join(self.path, images_dir)
