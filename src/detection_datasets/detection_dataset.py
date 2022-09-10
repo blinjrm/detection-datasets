@@ -1,6 +1,6 @@
 from typing import List
 
-from datasets import Dataset, load_dataset
+from datasets import Dataset, DatasetDict, load_dataset
 from huggingface_hub import HfApi
 
 from detection_datasets.utils import reader_factory, writer_factory
@@ -86,15 +86,18 @@ class DetectionDataset:
             repo_name: user of organisation to push the dataset to.
         """
 
-        repo_id = "/".join([repo_name, dataset_name])
+        # repo_id = "/".join([repo_name, dataset_name])
 
         hf_dataset_dict = DatasetDict()
-        data = self._data
+        data = self._dataset
 
         for split in data.unique("split"):
-            split_data = data.filter(lambda x: x == "train", input_columns="split")
+            split_data = data.filter(lambda x: x == split, input_columns="split")
+            split_data.add_column
+            hf_dataset_dict[split] = split_data
 
-        # self.dataset.push_to_hub(repo_id=repo_id, **kwargs)
+        # hf_dataset_dict.push_to_hub(repo_id=repo_id, **kwargs)
+        return hf_dataset_dict
 
     def to_disk(self, dataset_format: str, name: str, path: str) -> None:
         writer = writer_factory.get(dataset_format=dataset_format, name=name, path=path)
