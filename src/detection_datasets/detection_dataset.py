@@ -17,7 +17,7 @@ class DetectionDataset:
 
     COLUMNS = [
         "image_id",
-        "image",
+        "image_path",
         "width",
         "height",
         "split",
@@ -33,18 +33,17 @@ class DetectionDataset:
     def __init__(self, data: pd.DataFrame = None) -> None:
         """Initialize the dataset."""
 
-        self._format = "bbox"
+        self._format = "init"
 
         if data is not None:
-            data = data[data.columns.intersection(self.COLUMNS)]
             self.concat(data)
 
     def concat(self, other_data: pd.DataFrame) -> pd.DataFrame:
         """Concatenate the existing data with new data."""
 
         self.set_format(index="bbox")
-        self._data = pd.concat([self.data, other_data])
-        # return self._data
+        self._data = pd.concat([self.data.reset_index()[self.COLUMNS], other_data[self.COLUMNS]])
+        self.set_format(index="image")
 
     @property
     def data(self, index: str = None) -> pd.DataFrame:
@@ -52,6 +51,10 @@ class DetectionDataset:
             self.set_format(index=index)
 
         return self._data
+
+    @property
+    def format(self):
+        return self._format
 
     def from_hub(self, name: str) -> None:
         """Load a dataset from the Hugging Face Hub.
@@ -219,7 +222,6 @@ class DetectionDataset:
 
         return self._data.copy()
 
-    @property
     def _data_by_image(self) -> pd.DataFrame:
         """Returns the data grouped by image.
 
@@ -230,25 +232,21 @@ class DetectionDataset:
         data = self.data.reset_index().groupby("image_id")
         self._data = pd.DataFrame(
             {
-                "bbox_id": data["bbox_id"].apply(list),
-                "category_id": data["category_id"].apply(list),
-                "category": data["category"].apply(list),
-                "supercategory": data["supercategory"].apply(list),
-                "bbox": data["bbox"].apply(list),
+                "image_path": data["image_path"].first(),
                 "width": data["width"].first(),
                 "height": data["height"].first(),
-                "area": data["area"].apply(list),
-                "image_name": data["image_name"].first(),
-                "image_path": data["image_path"].first(),
                 "split": data["split"].first(),
+                "bbox_id": data["bbox_id"].apply(list),
+                "bbox": data["bbox"].apply(list),
+                "category_id": data["category_id"].apply(list),
+                "category": data["category"].apply(list),
+                "area": data["area"].apply(list),
             }
-        ).reset_index()
+        )
 
         self._format = "image"
 
-    def _data_by_bbox(
-        self,
-    ) -> pd.DataFrame:
+    def _data_by_bbox(self) -> pd.DataFrame:
         """Converts a DataFrame arranged by image to a DataFrame arranged by bbox.
 
         This method reverses the effect of calling self._data_by_image().
@@ -260,8 +258,11 @@ class DetectionDataset:
             A DataFrame arranged by bbox instead of images.
         """
 
-        self._data = self._data.explode(["bbox_id", "category_id", "category", "supercategory", "area", "bbox"])
-        # ).set_index(["image_id", "bbox_id"])
+        self._data = (
+            self._data.reset_index()
+            .explode(["bbox_id", "category_id", "category", "area", "bbox"])
+            .set_index(["image_id", "bbox_id"])
+        )
 
         self._format = "bbox"
 

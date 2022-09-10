@@ -57,4 +57,5 @@ class CocoReader(BaseReader):
 
         data = pd.merge(annotations, images, on="image_id", how="left")
         data = pd.merge(data, categories, on="category_id", how="left")
+
         return data

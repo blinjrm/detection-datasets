@@ -13,13 +13,13 @@ class MmdetWriter(BaseWriter):
     format = "mmdet"
 
     def __init__(self, **kwargs) -> None:
-        """Initializes the YoloWriter."""
+        """Initialize the YoloWriter."""
 
         super().__init__(**kwargs)
         self.data["bbox"] = [[bbox.to_voc() for bbox in bboxes] for bboxes in self.data.bbox]
 
     def write(self) -> None:
-        """Writes the dataset to disk.
+        """Write the dataset to disk.
 
         For the MMDET format, the associated steps are:
             1. Create the directories for the images and annotations.
@@ -59,7 +59,7 @@ class MmdetWriter(BaseWriter):
         return dataset
 
     def _save_dataset(self, dataset: Dict[str, List[str]], split: str):
-        """Creates a new directory and saves the dataset and images."""
+        """Create a new directory and saves the dataset and images."""
 
         split_path = os.path.join(self.dataset_dir, split)
         mmdet_data = dataset["mmdet_data"]

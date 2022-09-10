@@ -14,7 +14,6 @@ class BaseWriter(ABC):
         dataset: DetectionDataset,
         name: str,
         path: str,
-        destinations: list[str],
     ) -> None:
         """Base class for writing datasets to disk.
 
@@ -25,7 +24,7 @@ class BaseWriter(ABC):
             wandb_upload: Whether to upload the dataset to W&B artifacts.
         """
 
-        self.data = dataset.data_by_image
+        self.data = dataset.set_format(index="image")
         self.name = name
         self.path = path
         self.dataset_dir = os.path.join(self.path, self.name)
@@ -36,7 +35,7 @@ class BaseWriter(ABC):
 
     @abstractmethod
     def write(self) -> None:
-        """Writes the dataset to disk.
+        """Write the dataset to disk.
 
         This method is specifc to each format, and need to be implemented in the writer class.
         """
