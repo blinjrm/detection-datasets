@@ -22,9 +22,9 @@ class DetectionDataset:
         "height",
         "split",
         "bbox_id",
-        "bbox",
         "category_id",
         "category",
+        "bbox",
         "area",
     ]
 
@@ -142,10 +142,25 @@ class DetectionDataset:
 
         repo_id = "/".join([repo_name, dataset_name])
 
-        hf_dataset_dict = DatasetDict()
-        data = self.data_by_image
+        hf_dataset_dict = self.get_hf_dataset()
+        hf_dataset_dict.push_to_hub(repo_id=repo_id, **kwargs)
 
-        for split in data.unique("split"):
+    def get_hf_dataset(self) -> DatasetDict:
+        """Get the data formatted as an Hugging Face DatasetDict instance.
+
+        The DatasetDict contains a Dataset for each split present in the data.
+        All methods and properties of the DatasetDict can then be used.
+
+        Returns:
+            Data formatted as an Hugging Face DatasetDict instance
+        """
+
+        data = self.set_format(index="image").reset_index()
+        data["bbox"] = [[bbox.to_voc() for bbox in bboxes] for bboxes in data.bbox]
+
+        hf_dataset_dict = DatasetDict()
+
+        for split in self.splits:
             split_data = data[data.split == split]
             images_data = []
 
@@ -175,19 +190,18 @@ class DetectionDataset:
                     "height": Value(dtype="int64"),
                     "objects": Sequence(
                         {
-                            "area": Value(dtype="int64"),
-                            "bbox": Sequence(feature=Value(dtype="float64"), length=4),
+                            "bbox_id": Value(dtype="int64"),
                             "category": ClassLabel(names=self.category_names),
-                            "id": Value(dtype="int64"),
+                            "bbox": Sequence(feature=Value(dtype="float64"), length=4),
+                            "area": Value(dtype="int64"),
                         }
                     ),
                 }
             )
 
-            hf = Dataset.from_pandas(df=df, features=features, split=split)
-            hf_dataset_dict[split] = hf
+            ds = Dataset.from_pandas(df=df, features=features, split=split)
+            hf_dataset_dict[split] = ds
 
-        hf_dataset_dict.push_to_hub(repo_id=repo_id, **kwargs)
         return hf_dataset_dict
 
     def to_disk(self, dataset_format: str, name: str, path: str) -> None:
