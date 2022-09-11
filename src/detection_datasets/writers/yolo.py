@@ -134,4 +134,4 @@ class YoloWriter(BaseWriter):
         elif task == "images":
             return os.path.join(self.dataset_dir, "images", split, image_id + ".jpg")
         else:
-            raise ValueError(f"tTask must be either 'lables' or 'images', not {task}")
+            raise ValueError(f"Task must be either 'lables' or 'images', not {task}")

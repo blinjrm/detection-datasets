@@ -24,7 +24,7 @@ class BaseWriter(ABC):
             wandb_upload: Whether to upload the dataset to W&B artifacts.
         """
 
-        self.data = dataset.set_format(index="image")
+        self.data = dataset.set_format(index="image").reset_index()
         self.name = name
         self.path = path
         self.dataset_dir = os.path.join(self.path, self.name)

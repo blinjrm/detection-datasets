@@ -86,7 +86,6 @@ class DetectionDataset:
         df = pd.concat(df_splits)
 
         objects = pd.json_normalize(df["objects"])
-        objects = objects.rename(columns={"id": "bbox_id"})
 
         data = df.join(objects)
         data = data.drop(columns=["objects"])
@@ -152,7 +151,7 @@ class DetectionDataset:
 
             for _, row in split_data.iterrows():
                 objects = {}
-                objects["id"] = row["bbox_id"]
+                objects["bbox_id"] = row["bbox_id"]
                 objects["category"] = row["category"]
                 objects["bbox"] = row["bbox"]
                 objects["area"] = row["area"]
@@ -266,12 +265,13 @@ class DetectionDataset:
 
         self._format = "bbox"
 
-    def select(self, n_images: int) -> None:
+    def select(self, n_images: int, seed: int = 42) -> None:
         """Limits the number of images to n_images.
 
         Args:
             n_images: Number of images to include in the dataset.
                 The original proportion of images between splits will be respected.
+            seed: Random seed.
         """
 
         data_by_image = self.set_format(index="image")
@@ -284,13 +284,10 @@ class DetectionDataset:
         split_data = []
 
         for split in Split:
-            if split.value in data_by_image.unique("split"):
-                sample_size = int(n_images * self.split_proportions[split.value])
-                split_data.append(
-                    data_by_image.loc[data_by_image.split == split.value, :]
-                    .sample(frac=sample_size, random_state=42)
-                    .reset_index(drop=True)
-                )
+            sample_size = int(n_images * self.split_proportions[split.value])
+            split_data.append(
+                data_by_image.loc[data_by_image.split == split.value, :].sample(n=sample_size, random_state=seed)
+            )
 
         self._data = pd.concat(split_data)
 
@@ -307,9 +304,7 @@ class DetectionDataset:
 
         for split in Split:
             split_data.append(
-                data_by_image.loc[data_by_image.split == split.value, :]
-                .sample(frac=1, random_state=seed)
-                .reset_index(drop=True)
+                data_by_image.loc[data_by_image.split == split.value, :].sample(frac=1, random_state=seed)
             )
 
         self._data = pd.concat(split_data)
@@ -378,9 +373,21 @@ class DetectionDataset:
             The number of images in the dataset.
         """
 
-        self.set_format(index="image")
+        data = self.set_format(index="image")
 
-        return len(self._data)
+        return len(data)
+
+    @property
+    def n_bbox(self) -> int:
+        """Returns the number of images in the dataset.
+
+        Returns:
+            The number of images in the dataset.
+        """
+
+        data = self.set_format(index="bbox")
+
+        return len(data)
 
     @property
     def splits(self) -> List[str]:
@@ -400,7 +407,7 @@ class DetectionDataset:
             The proportion of images in the train, val and test splits.
         """
 
-        data = self._data
+        data = self.set_format(index="image")
 
         return pd.DataFrame({s.value: [len(data[data.split == s.value]) / len(data)] for s in Split})
 
@@ -408,12 +415,14 @@ class DetectionDataset:
     def categories(self) -> None:
         """Creates a DataFrame containing the categories found in the data with their id."""
 
+        data = self.set_format(index="bbox")
+
         return (
-            # self.data.loc[:, ["category_id", "category", "supercategory"]]
-            self.data.loc[:, ["category_id", "category"]]
+            data.loc[:, ["category_id", "category"]]
             .drop_duplicates()
+            .astype({"category_id": int, "category": "object"})
             .sort_values("category_id")
-            .reset_index(drop=True)
+            .set_index("category_id")
         )
 
     @property
