@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from detection_datasets.utils import Dataset
+import pandas as pd
 
 
 class BaseReader(ABC):
@@ -14,9 +14,9 @@ class BaseReader(ABC):
         self.path = path
 
     @abstractmethod
-    def load(self) -> Dataset:
-        """Load a dataset.
+    def read(self) -> pd.DataFrame:
+        """Read a dataset from disk.
 
         Returns:
-            A Dataset instance containing the data loaded.
+            A pandas DataFrame containing the data loaded.
         """

@@ -22,18 +22,18 @@ names: [{class_names}]
 
 
 class YoloWriter(BaseWriter):
-    """Writes a dataset to a directory in the YOLO format."""
+    """Write a dataset to a directory in the YOLO format."""
 
     format = "yolo"
 
     def __init__(self, **kwargs) -> None:
-        """Initializes the YoloWriter."""
+        """Initialize the YoloWriter."""
 
         super().__init__(**kwargs)
         self.data["bbox"] = [[bbox.to_yolo() for bbox in bboxes] for bboxes in self.data.bbox]
 
-    def write_to_disk(self) -> None:
-        """Writes the dataset to disk.
+    def write(self) -> None:
+        """Write the dataset to disk.
 
         For the YOLO format, the associated steps are:
             1. Write the YAML file.
@@ -70,7 +70,7 @@ class YoloWriter(BaseWriter):
             yaml.dump(yaml_dataset, outfile)
 
     def _make_dirs(self, split: str) -> None:
-        """Creates the directories (images, labels) for the given split.
+        """Create the directories (images, labels) for the given split.
 
         Args:
             split: The split to create the directories for (train, val, test).
@@ -89,7 +89,7 @@ class YoloWriter(BaseWriter):
         Parallel()(delayed(self._write_images_labels)(row) for _, row in split_data.iterrows())
 
     def _write_images_labels(self, row: pd.DataFrame) -> None:
-        """Writes the images and labels for a single image.
+        """Write the images and labels for a single image.
 
         Args:
             row: The row of the dataframe to write.
@@ -113,7 +113,7 @@ class YoloWriter(BaseWriter):
                 f.write(labels + "\n")
 
     def _get_filename(self, row: pd.Series, task: str) -> str:
-        """Returns the filename for the given row and task.
+        """Get the filename for the given row and task.
 
         Args:
             row: The row of the dataframe to write.
@@ -134,4 +134,4 @@ class YoloWriter(BaseWriter):
         elif task == "images":
             return os.path.join(self.dataset_dir, "images", split, image_id + ".jpg")
         else:
-            raise ValueError(f"tTask must be either 'lables' or 'images', not {task}")
+            raise ValueError(f"Task must be either 'lables' or 'images', not {task}")

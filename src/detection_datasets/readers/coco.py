@@ -3,9 +3,8 @@ import os
 from typing import Dict, Tuple
 
 import pandas as pd
-from datasets import ClassLabel, Dataset, Features, Image, Sequence, Value
 
-# from detection_datasets.bbox import Bbox
+from detection_datasets.bbox import Bbox
 from detection_datasets.readers import BaseReader
 
 
@@ -14,7 +13,7 @@ class CocoReader(BaseReader):
         super().__init__(path)
         self.splits = splits
 
-    def load(self) -> Dataset:
+    def read(self) -> pd.DataFrame():
         annotation_dataframes = []
         for split, (annotation_file, images_dir) in self.splits.items():
             images_path_prefix = os.path.join(self.path, images_dir)
@@ -29,11 +28,11 @@ class CocoReader(BaseReader):
             annotation_dataframes.append(annotation_dataframe)
 
         annotation_by_bbox = pd.concat(annotation_dataframes, axis=0, ignore_index=True)
-        # annotation_by_bbox["bbox"] = [
-        #     Bbox.from_coco(row.bbox, row.width, row.height) for _, row in annotation_by_bbox.iterrows()
-        # ]
+        annotation_by_bbox["bbox"] = [
+            Bbox.from_coco(row.bbox, row.width, row.height) for _, row in annotation_by_bbox.iterrows()
+        ]
 
-        return self._make_dataset(data=annotation_by_bbox)
+        return annotation_by_bbox
 
     @staticmethod
     def _read_json(path: str, file: str) -> json:
@@ -58,35 +57,5 @@ class CocoReader(BaseReader):
 
         data = pd.merge(annotations, images, on="image_id", how="left")
         data = pd.merge(data, categories, on="category_id", how="left")
+
         return data
-
-    def _make_dataset(self, data: pd.DataFrame) -> Dataset:
-        data = data.groupby("image_id")
-        data_by_image = pd.DataFrame(
-            {
-                "image": data["image_path"].first(),
-                "width": data["width"].first(),
-                "height": data["height"].first(),
-                "split": data["split"].first(),
-                "bbox_id": data["bbox_id"].apply(list),
-                "bbox": data["bbox"].apply(list),
-                "area": data["area"].apply(list),
-                "category": data["category"].apply(list),
-            }
-        ).reset_index()
-
-        features = Features(
-            {
-                "image_id": Value(dtype="int64"),
-                "image": Image(decode=True),
-                "width": Value(dtype="int64"),
-                "height": Value(dtype="int64"),
-                "split": Value(dtype="string"),
-                "bbox_id": Sequence(feature=Value(dtype="int64")),
-                "bbox": Sequence(Sequence(feature=Value(dtype="int64"), length=4)),
-                "area": Sequence(feature=Value(dtype="int64")),
-                "category": Sequence(ClassLabel(names=self.categories)),
-            }
-        )
-
-        return Dataset.from_pandas(df=data_by_image, features=features)
