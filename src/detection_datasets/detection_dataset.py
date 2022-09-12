@@ -126,7 +126,7 @@ class DetectionDataset:
 
         self.concat(other_data=data)
 
-    def to_hub(self, dataset_name: str, repo_name: str = ORGANISATION, **kwargs) -> None:
+    def to_hub(self, dataset_name: str, repo_name: str, **kwargs) -> None:
         """Push the dataset to the hub as a Parquet dataset.
 
         This method wraps Hugging Face's DatasetDict.push_to_hub() method, check here for reference:
