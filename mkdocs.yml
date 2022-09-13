@@ -35,7 +35,7 @@ nav:
   - How-to guides: how-to-guides.md
   - Reference:
       - reference/index.md
-      - DetectionDataset: reference/detection-dataset.md
+      - DetectionDataset: reference/detection_dataset.md
       - Bbox: reference/bbox.md
       - Readers: reference/readers.md
       - Writers: reference/writers.md
