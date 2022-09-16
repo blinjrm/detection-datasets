@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import List, Tuple, Union
 
 import numpy as np
@@ -10,6 +11,7 @@ from detection_datasets.utils.factories import reader_factory, writer_factory
 
 api = HfApi()
 ORGANISATION = "detection-datasets"
+CACHE_DIR = ".detection-datasets"
 SPLITS = ["train", "val", "test"]
 
 
@@ -56,13 +58,16 @@ class DetectionDataset:
     def format(self):
         return self._format
 
-    def from_hub(self, name: str) -> None:
+    def from_hub(self, name: str, in_memory: bool = False) -> None:
         """Load a dataset from the Hugging Face Hub.
 
         Currently only datasets from the 'detection-datasets' organisation can be loaded.
 
         Args:
             name: name of the dataset, without the organisation's prefix.
+            in_memory: whether to keep the images in memory. Set to False if the system runs
+                out of memory, then the images will be downloaded and only the path to these
+                images will be saved in the data. Defaults to True.
 
         Returns:
             A DetectionDataset instance containing the loaded data.
@@ -76,25 +81,47 @@ class DetectionDataset:
 
         path = "/".join([ORGANISATION, name])
         ds = load_dataset(path=path)
+        categories = ds[list(ds.keys())[0]].features["objects"].feature["category"]
+
+        if not in_memory:
+            DOWNLOAD_PATH = Path.home() / CACHE_DIR
+            DOWNLOAD_PATH.mkdir(parents=True, exist_ok=True)
+
+            def download_images(row):
+                file_path = "".join([DOWNLOAD_PATH.as_posix(), "/", str(row["image_id"]), ".jpg"])
+                row["image"].save(file_path)
+                row["image_path"] = file_path
+                return row
+
+            ds = ds.map(
+                download_images,
+                remove_columns="image",
+                load_from_cache_file=False,
+                desc="Moving images from memory to disk",
+            )
 
         df_splits = []
         for key in ds.keys():
             df_split = ds[key].to_pandas()
             df_split["split"] = key
+
             df_splits.append(df_split)
 
         df = pd.concat(df_splits)
-
         objects = pd.json_normalize(df["objects"])
-
         data = df.join(objects)
-        data = data.drop(columns=["objects"])
+
+        if "image_path" not in data.columns:
+            data["image_path"] = [x["bytes"] for x in data.loc[:, "image"]]
+
+        data = data.drop(columns=["objects", "image"], errors="ignore")
+        data["category_id"] = data.loc[:, "category"]
+        data["category"] = [[categories.int2str(int(x)) for x in row["category"]] for _, row in data.iterrows()]
 
         self.concat(other_data=data)
 
     @property
-    @staticmethod
-    def available_in_hub() -> List[str]:
+    def available_in_hub(self) -> List[str]:
         """List the datasets available in the Hugging Face Hub.
 
         Returns:
