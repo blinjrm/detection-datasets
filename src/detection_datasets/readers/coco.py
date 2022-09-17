@@ -29,7 +29,7 @@ class CocoReader(BaseReader):
 
         annotation_by_bbox = pd.concat(annotation_dataframes, axis=0, ignore_index=True)
         annotation_by_bbox["bbox"] = [
-            Bbox.from_coco(row.bbox, row.width, row.height) for _, row in annotation_by_bbox.iterrows()
+            Bbox.from_coco(row.bbox, row.width, row.height, row.bbox_id) for _, row in annotation_by_bbox.iterrows()
         ]
 
         return annotation_by_bbox

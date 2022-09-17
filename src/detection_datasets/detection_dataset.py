@@ -5,9 +5,12 @@ import numpy as np
 import pandas as pd
 from datasets import ClassLabel, Dataset, DatasetDict, Features, Image, Sequence, Value, load_dataset
 from huggingface_hub import HfApi
+from PIL import Image as PILImage
 
+from detection_datasets.bbox import Bbox
 from detection_datasets.utils.enums import Split
 from detection_datasets.utils.factories import reader_factory, writer_factory
+from detection_datasets.utils.visualization import show_image_bbox
 
 api = HfApi()
 ORGANISATION = "detection-datasets"
@@ -40,10 +43,10 @@ class DetectionDataset:
         if data is not None:
             self.concat(data)
 
-    def concat(self, other_data: pd.DataFrame) -> pd.DataFrame:
+    def concat(self, other_data: pd.DataFrame, other_data_format: str = "bbox") -> pd.DataFrame:
         """Concatenate the existing data with new data."""
 
-        self.set_format(index="bbox")
+        self.set_format(index=other_data_format)
         self._data = pd.concat([self.data.reset_index()[self.COLUMNS], other_data[self.COLUMNS]])
         self.set_format(index="image")
 
@@ -108,6 +111,7 @@ class DetectionDataset:
             df_splits.append(df_split)
 
         df = pd.concat(df_splits)
+        df = df.reset_index(drop=True)
         objects = pd.json_normalize(df["objects"])
         data = df.join(objects)
 
@@ -118,7 +122,11 @@ class DetectionDataset:
         data["category_id"] = data.loc[:, "category"]
         data["category"] = [[categories.int2str(int(x)) for x in row["category"]] for _, row in data.iterrows()]
 
+        data = data.explode(["bbox_id", "category_id", "category", "bbox", "area"])
+        data["bbox"] = [Bbox.from_voc(row.bbox, row.width, row.height, row.bbox_id) for _, row in data.iterrows()]
+
         self.concat(other_data=data)
+        return self
 
     @property
     def available_in_hub(self) -> List[str]:
@@ -152,6 +160,7 @@ class DetectionDataset:
         data = reader.read()
 
         self.concat(other_data=data)
+        return self
 
     def to_hub(self, dataset_name: str, repo_name: str, **kwargs) -> None:
         """Push the dataset to the hub as a Parquet dataset.
@@ -171,6 +180,7 @@ class DetectionDataset:
 
         hf_dataset_dict = self.get_hf_dataset()
         hf_dataset_dict.push_to_hub(repo_id=repo_id, **kwargs)
+        return self
 
     def get_hf_dataset(self) -> DatasetDict:
         """Get the data formatted as an Hugging Face DatasetDict instance.
@@ -231,7 +241,7 @@ class DetectionDataset:
 
         return hf_dataset_dict
 
-    def to_disk(self, dataset_format: str, name: str, path: str) -> None:
+    def to_disk(self, dataset_format: str, name: str, absolute_path: str) -> None:
         """Write the dataset to disk.
 
         This is a factory method that can write the dataset to disk in the selected format (e.g. COCO, MMDET, YOLO)
@@ -243,12 +253,13 @@ class DetectionDataset:
                 - "mmdet": MMDET internal format, see:
                     https://mmdetection.readthedocs.io/en/latest/tutorials/customize_dataset.html#reorganize-new-data-format-to-middle-format
             name: Name of the dataset to be created in the "path" directory.
-            path: Path to the directory where the dataset will be created.
+            absolute_path: Absolute path to the directory where the dataset will be created.
             **kwargs: Keyword arguments specific to the dataset_format.
         """
 
-        writer = writer_factory.get(dataset_format=dataset_format, dataset=self, name=name, path=path)
+        writer = writer_factory.get(dataset_format=dataset_format, dataset=self, name=name, path=absolute_path)
         writer.write()
+        return self
 
     def set_format(self, index: str) -> pd.DataFrame:
         if index == self._format:
@@ -300,7 +311,7 @@ class DetectionDataset:
 
         self._data = (
             self._data.reset_index()
-            .explode(["bbox_id", "category_id", "category", "area", "bbox"])
+            .explode(["bbox_id", "category_id", "category", "bbox", "area"])
             .set_index(["image_id", "bbox_id"])
         )
 
@@ -331,6 +342,7 @@ class DetectionDataset:
             )
 
         self._data = pd.concat(split_data)
+        return self
 
     def shuffle(self, seed: int = 42) -> None:
         """Shuffles the dataset.
@@ -349,6 +361,7 @@ class DetectionDataset:
             )
 
         self._data = pd.concat(split_data)
+        return self
 
     def split(self, splits: Tuple[Union[int, float]]) -> None:
         """Splits the dataset into train, val and test.
@@ -380,6 +393,7 @@ class DetectionDataset:
         data_test["split"] = Split.TEST.value
 
         self._data = pd.concat([data_train, data_val, data_test])
+        return self
 
     def map_categories(self, mapping: pd.DataFrame) -> None:
         """Maps the categories to the new categories.
@@ -405,6 +419,28 @@ class DetectionDataset:
                 "new_category": "category",
             }
         )
+        return self
+
+    def show(self, image_id: int = None) -> PILImage:
+        """Show the image with bounding boxes and labels.
+
+        Args:
+            image_id: Id of the image. If not provided, a random image is selected. Defaults to None.
+
+        Returns:
+            Image with bounding boxes and labels.
+        """
+
+        data = self.set_format(index="bbox")
+
+        if image_id is None:
+            index = np.random.randint(0, len(data))
+            image_id = data.reset_index().iloc[index]["image_id"]
+
+        rows = data.loc[image_id]
+
+        image = show_image_bbox(rows=rows)
+        return image
 
     @property
     def n_images(self) -> int:
