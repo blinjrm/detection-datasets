@@ -1,48 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-         <loc>None</loc>
-         <lastmod>2022-09-13</lastmod>
+         <loc>https://blinjrm.github.io/detection-datasets/</loc>
+         <lastmod>2022-09-18</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>None</loc>
-         <lastmod>2022-09-13</lastmod>
+         <loc>https://blinjrm.github.io/detection-datasets/explanation/</loc>
+         <lastmod>2022-09-18</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>None</loc>
-         <lastmod>2022-09-13</lastmod>
+         <loc>https://blinjrm.github.io/detection-datasets/how-to-guides/</loc>
+         <lastmod>2022-09-18</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>None</loc>
-         <lastmod>2022-09-13</lastmod>
+         <loc>https://blinjrm.github.io/detection-datasets/tutorials/</loc>
+         <lastmod>2022-09-18</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>None</loc>
-         <lastmod>2022-09-13</lastmod>
+         <loc>https://blinjrm.github.io/detection-datasets/reference/</loc>
+         <lastmod>2022-09-18</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>None</loc>
-         <lastmod>2022-09-13</lastmod>
+         <loc>https://blinjrm.github.io/detection-datasets/reference/bbox/</loc>
+         <lastmod>2022-09-18</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>None</loc>
-         <lastmod>2022-09-13</lastmod>
+         <loc>https://blinjrm.github.io/detection-datasets/reference/detection_dataset/</loc>
+         <lastmod>2022-09-18</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>None</loc>
-         <lastmod>2022-09-13</lastmod>
+         <loc>https://blinjrm.github.io/detection-datasets/reference/readers/</loc>
+         <lastmod>2022-09-18</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>None</loc>
-         <lastmod>2022-09-13</lastmod>
+         <loc>https://blinjrm.github.io/detection-datasets/reference/writers/</loc>
+         <lastmod>2022-09-18</lastmod>
          <changefreq>daily</changefreq>
     </url>
 </urlset>
