@@ -32,7 +32,7 @@ plugins:
   - search
 
 nav:
-  - Quik-start: index.md
+  - Quick-start: index.md
   - Tutorial: tutorials.md
   - How-to guides: how-to-guides.md
   - Reference:
