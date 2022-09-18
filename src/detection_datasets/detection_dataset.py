@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Tuple, Union
+from typing import Iterable, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -43,23 +43,27 @@ class DetectionDataset:
         if data is not None:
             self.concat(data)
 
-    def concat(self, other_data: pd.DataFrame, other_data_format: str = "bbox") -> pd.DataFrame:
-        """Concatenate the existing data with new data."""
-
-        self.set_format(index=other_data_format)
-        self._data = pd.concat([self.data.reset_index()[self.COLUMNS], other_data[self.COLUMNS]])
-        self.set_format(index="image")
-
     @property
-    def data(self, index: str = None) -> pd.DataFrame:
-        if index:
-            self.set_format(index=index)
+    def data(self) -> pd.DataFrame:
+        return self.get_data()
 
-        return self._data
+    def get_data(self, index: str = "image") -> pd.DataFrame:
+        data = self.set_format(index=index)
+
+        return data
+
+    # data = property(_get_data)
 
     @property
     def format(self):
         return self._format
+
+    def concat(self, other_data: pd.DataFrame, other_data_format: str = "bbox") -> pd.DataFrame:
+        """Concatenate the existing data with new data."""
+
+        self.set_format(index=other_data_format)
+        self._data = pd.concat([self._data.reset_index()[self.COLUMNS], other_data[self.COLUMNS]])
+        self.set_format(index="image")
 
     def from_hub(self, name: str, in_memory: bool = False) -> None:
         """Load a dataset from the Hugging Face Hub.
@@ -280,7 +284,7 @@ class DetectionDataset:
             A DataFrame grouped by image, meaning that each may contain data related to multiple bboxes.
         """
 
-        data = self.data.reset_index().groupby("image_id")
+        data = self._data.reset_index().groupby("image_id")
         self._data = pd.DataFrame(
             {
                 "image_path": data["image_path"].first(),
@@ -363,7 +367,7 @@ class DetectionDataset:
         self._data = pd.concat(split_data)
         return self
 
-    def split(self, splits: Tuple[Union[int, float]]) -> None:
+    def split(self, splits: Iterable[float]) -> None:
         """Splits the dataset into train, val and test.
 
         Args:
@@ -372,13 +376,13 @@ class DetectionDataset:
         """
 
         if len(splits) != 3:
-            raise ValueError(f"The splits must be a tuple of 3 elements, here it is: {splits}.")
+            raise ValueError(f"The splits must contain 3 elements, here it is: {splits}.")
 
         if sum(splits) != 1:
             raise ValueError(f"The sum of the proportion for each split must be equal to 1, here it is: {sum(splits)}.")
 
         if not all([isinstance(x, float) for x in splits]):
-            raise TypeError("Splits must be either int or float, here it is: {}.".format(*[type(s) for s in splits]))
+            raise TypeError("Splits must all be floats, here it is: {}.".format(*[type(s) for s in splits]))
 
         data_by_image = self.set_format(index="image")
 
@@ -474,7 +478,7 @@ class DetectionDataset:
             The splits present in the dataset.
         """
 
-        return self.data.split.unique().tolist()
+        return self._data.split.unique().tolist()
 
     @property
     def split_proportions(self) -> Tuple[float, float, float]:

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "detection_datasets"
-version = "0.2.0"
+version = "0.2.1"
 description = "Easily convert datasets between different formats for object detection"
 authors = ["Jerome Blin <blinjrm@gmail.com>"]
 license = "MIT"
