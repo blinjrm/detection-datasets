@@ -33,7 +33,7 @@ plugins:
 
 nav:
   - Quick-start: index.md
-  - Tutorial: tutorials.md
+  - Tutorials: tutorials.md
   - How-to guides: how-to-guides.md
   - Reference:
       - reference/index.md
