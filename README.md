@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="images/dd_logo.png" width="100"/>
+<img src="images/dd_logo.png" alt="logo" width="100"/>
 
 <br>
 
@@ -45,14 +45,11 @@ The main features are:
     * to disk, selecting the target detection format: `COCO`, `YOLO` and more to come.
     * to the Hugging Face Hub for easy reuse in a different environment and share with the community.
 
-
-<br>
-
 ## Requirements
 
 Python 3.8+
 
-detection_datasets is upon the great work of:
+`detection_datasets` is upon the great work of:
 
 * <a href="https://pandas.pydata.org/" class="external-link" target="_blank">Pandas</a> for manipulating data.
 * <a href="https://huggingface.co/" class="external-link" target="_blank">Hugging Face</a> to store and load datasets from the Hub.
@@ -65,14 +62,11 @@ detection_datasets is upon the great work of:
 $ pip install detection_datasets
 ```
 
-<br>
-
 # Examples
 
 ```Python
 from detection_datasets import DetectionDataset
 ```
-
 
 ## 1. Read
 
@@ -98,10 +92,87 @@ dd.from_disk(**config)
 From the Hugging Face Hub:
 
 ```Python
-dd = DetectionDataset().from_hub('fashionpedia')
+dd = DetectionDataset().from_hub(name='fashionpedia')
 ```
+Currently supported format for reading datasets are:
+- COCO
+- *more to come*
 
 The list of datasets available from the Hub is given by:
 ```Python
 DetectionDataset().available_in_hub
 ```
+
+## 2. Transform
+
+Here we select a subset of 10.000 images and create new train-val-test splits, overwritting the splits from the original dataset:
+```Python
+dd = DetectionDataset()\
+    .from_hub(name='fashionpedia')\
+    .select(n_images=10000)\
+    .split(splits=[0.8, 0.1, 0.1])
+```
+
+## 3. Visualize
+
+The `DetectionDataset` objects contains several properties to analyze your data:
+
+
+```Python
+dd.data
+# This is equivlent to calling `dd.get_data('image')`, and returns a DataFrame with 1 row per image
+
+dd.get_data('bbox')     # Returns a DataFrame with 1 row per annotation
+
+dd.n_images             # Number of images
+
+dd.n_bbox               # Number of annotations
+
+dd.splits               # List of split names
+
+dd.split_proportions    # DataFrame with the % of iamges in each split
+
+dd.categories           # DataFrame with the categories and thei ids
+
+dd.category_names       # List of categories
+
+dd.n_categories         # Number of categories
+
+```
+
+You can also visualize a image with its annotations in a notebook:
+```Python
+dd.show()                   # Shows a random image from the dataset
+dd.show(image_id=42)        # Shows the select image based on image_id
+```
+
+<div align="center">
+<img src="images/show.png" alt="hub viewer" width="500"/>
+</div>
+
+## 4. Write
+
+Once the dataset is ready, you can write it to the local filesystem in a given format:
+
+```Python
+dd.to_disk(
+    dataset_format='yolo',
+    name='MY_DATASET_NAME',
+    path='DIRECTORY_TO_WRITE_TO',
+)
+```
+
+Currently supported format for writing datasets are:
+- YOLO
+- MMDET
+- *more to come*
+
+The dataset can also be easily uploaded to the Hugging Face Hub, for reuse later on or in a different environment:
+```Python
+dd.to_hub(dataset_name='MY_DATASET_NAME', repo_name='MY_REPO_OR_ORGANISATION')
+```
+The dataset viewer on the Hub will work out of the box, and we encourage you to update the README in your new repo to make it easier for the comminuty to use it.
+
+<div align="center">
+<img src="images/hub.png" alt="hub viewer" width="800"/>
+</div>
