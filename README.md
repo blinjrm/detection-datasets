@@ -34,16 +34,16 @@
 `detection_datasets` aims to make it easier to work with detection datasets.
 The main features are:
 * **Read** the dataset :
-    * from disk if it has already been downloaded.
-    * directly from the Hugging Face Hub if it [already exist](https://huggingface.co/detection-datasets).
+    * From disk if it has already been downloaded.
+    * Directly from the Hugging Face Hub if it [already exist](https://huggingface.co/detection-datasets).
 * **Transform** the dataset:
     * Select a subset of data.
     * Remap categories.
     * Create new train-val-test splits.
 * **Visualize** the annotations.
-* **write** the dataset:
-    * to disk, selecting the target detection format: `COCO`, `YOLO` and more to come.
-    * to the Hugging Face Hub for easy reuse in a different environment and share with the community.
+* **Write** the dataset:
+    * To disk, selecting the target detection format: `COCO`, `YOLO` and more to come.
+    * To the Hugging Face Hub for easy reuse in a different environment and share with the community.
 
 ## Requirements
 
@@ -52,11 +52,9 @@ Python 3.8+
 `detection_datasets` is upon the great work of:
 
 * <a href="https://pandas.pydata.org/" class="external-link" target="_blank">Pandas</a> for manipulating data.
-* <a href="https://huggingface.co/" class="external-link" target="_blank">Hugging Face</a> to store and load datasets from the Hub.
+* <a href="https://huggingface.co/" class="external-link" target="_blank">Hugging Face Dataset</a> to store and load datasets from the Hub.
 
 ## Installation
-
-<div class="termy">
 
 ```console
 $ pip install detection_datasets
@@ -119,24 +117,24 @@ The `DetectionDataset` objects contains several properties to analyze your data:
 
 
 ```Python
-dd.data
-# This is equivlent to calling `dd.get_data('image')`, and returns a DataFrame with 1 row per image
+dd.data                     # This is equivlent to calling `dd.get_data('image')`,
+                            # and returns a DataFrame with 1 row per image
 
-dd.get_data('bbox')     # Returns a DataFrame with 1 row per annotation
+dd.get_data('bbox')         # Returns a DataFrame with 1 row per annotation
 
-dd.n_images             # Number of images
+dd.n_images                 # Number of images
 
-dd.n_bbox               # Number of annotations
+dd.n_bbox                   # Number of annotations
 
-dd.splits               # List of split names
+dd.splits                   # List of split names
 
-dd.split_proportions    # DataFrame with the % of iamges in each split
+dd.split_proportions        # DataFrame with the % of iamges in each split
 
-dd.categories           # DataFrame with the categories and thei ids
+dd.categories               # DataFrame with the categories and thei ids
 
-dd.category_names       # List of categories
+dd.category_names           # List of categories
 
-dd.n_categories         # Number of categories
+dd.n_categories             # Number of categories
 
 ```
 
@@ -147,7 +145,7 @@ dd.show(image_id=42)        # Shows the select image based on image_id
 ```
 
 <div align="center">
-<img src="images/show.png" alt="hub viewer" width="500"/>
+<img src="images/show.png" alt="image with annotations" width="500"/>
 </div>
 
 ## 4. Write
@@ -171,7 +169,7 @@ The dataset can also be easily uploaded to the Hugging Face Hub, for reuse later
 ```Python
 dd.to_hub(dataset_name='MY_DATASET_NAME', repo_name='MY_REPO_OR_ORGANISATION')
 ```
-The dataset viewer on the Hub will work out of the box, and we encourage you to update the README in your new repo to make it easier for the comminuty to use it.
+The dataset viewer on the Hub will work out of the box, and we encourage you to update the README in your new repo to make it easier for the comminuty to use the dataset.
 
 <div align="center">
 <img src="images/hub.png" alt="hub viewer" width="800"/>

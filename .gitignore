@@ -28,6 +28,7 @@ dmypy.json
 .DS_Store
 
 # Jupyter notebook
+notebooks/
 .ipynb_checkpoints/
 
 # W&B

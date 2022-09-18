@@ -1,4 +1,6 @@
 site_name: detection-datasets
+site_description: Easily load and transform datasets for object detection
+site_url: https://blinjrm.github.io/detection-datasets/
 
 theme:
   name: material
@@ -30,8 +32,8 @@ plugins:
   - search
 
 nav:
-  - Detection-dataset: index.md
-  - tutorials.md
+  - Quik-start: index.md
+  - Tutorial: tutorials.md
   - How-to guides: how-to-guides.md
   - Reference:
       - reference/index.md
@@ -39,7 +41,7 @@ nav:
       - Bbox: reference/bbox.md
       - Readers: reference/readers.md
       - Writers: reference/writers.md
-  - explanation.md
+  - Explanation: explanation.md
 
 markdown_extensions:
   - toc:
