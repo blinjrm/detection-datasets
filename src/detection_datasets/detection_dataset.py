@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Iterable, List, Tuple
+from typing import Dict, Iterable, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -399,30 +399,25 @@ class DetectionDataset:
         self._data = pd.concat([data_train, data_val, data_test])
         return self
 
-    def map_categories(self, mapping: pd.DataFrame) -> None:
+    def map_categories(self, mapping: Dict[str, str]) -> None:
         """Maps the categories to the new categories.
 
+        The new categoy names replace the existing ones.
+        Annotations with categories not present in the mapping are dropped.
+        The new category_ids correspond the the rank of the new categories in alphabetical order.
+
         Args:
-            category_mapping: A DataFrame mapping original categories to new categories.
-                Schema:
-                    - category_id: Original category id
-                    - category: Original category name
-                    - new_category_id: New category id
-                    - new_category: New category name
+            mapping: A dictionnary mapping original categories to new categories.
         """
 
-        mapping = mapping.loc[:, ["category_id", "category", "new_category_id", "new_category"]]
+        data = self.set_format(index="bbox").reset_index()
+        data["category"] = data.loc[:, "category"].map(mapping)
+        data = data[~data.category.isna()]
 
-        data = self.set_format(index="bbox")
+        categories = sorted(data.category.unique())
+        data["category_id"] = data.loc[:, "category"].apply(lambda cat: categories.index(cat))
 
-        data = data.merge(mapping, on=["category_id", "category"], how="left", validate="m:1")
-        data = data[data.new_category_id >= 0]
-        self._data = data.drop(columns=["category_id", "category"]).rename(
-            columns={
-                "new_category_id": "category_id",
-                "new_category": "category",
-            }
-        )
+        self._data = data.set_index(["image_id", "bbox_id"])
         return self
 
     def show(self, image_id: int = None) -> PILImage:

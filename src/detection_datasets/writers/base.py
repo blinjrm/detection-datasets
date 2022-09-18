@@ -21,7 +21,6 @@ class BaseWriter(ABC):
             dataset: Dataframe containing the dataset to write to disk.
             name: Name of the dataset to be created in the "path" directory.
             path: Path to the directory where the dataset will be created.
-            wandb_upload: Whether to upload the dataset to W&B artifacts.
         """
 
         self.data = dataset.set_format(index="image").reset_index()
