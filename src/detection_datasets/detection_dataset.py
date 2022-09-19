@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Dict, Iterable, List, Tuple
+from typing import Iterable
 
 import numpy as np
 import pandas as pd
@@ -36,36 +38,43 @@ class DetectionDataset:
     _data = pd.DataFrame(columns=COLUMNS).set_index(["image_id", "bbox_id"])
 
     def __init__(self, data: pd.DataFrame = None) -> None:
-        """Initialize the dataset."""
+        """Initialize the dataset.
+
+        Don't call the constructr directly, use `from_hub()` or `from_disk()` methods instead.
+        """
 
         self._format = "init"
 
         if data is not None:
-            self.concat(data)
+            self._concat(data)
 
     @property
     def data(self) -> pd.DataFrame:
+        """Getter for the data, with annotations grouped by images."""
+
         return self.get_data()
 
     def get_data(self, index: str = "image") -> pd.DataFrame:
+        """Getter for the data, with the possibility to specify the format."""
+
         data = self.set_format(index=index)
 
         return data
 
-    # data = property(_get_data)
-
     @property
-    def format(self):
+    def format(self) -> str:
+        """Getter for the current format of the data ("image" or "bbox")."""
+
         return self._format
 
-    def concat(self, other_data: pd.DataFrame, other_data_format: str = "bbox") -> pd.DataFrame:
+    def _concat(self, other_data: pd.DataFrame, other_data_format: str = "bbox") -> pd.DataFrame:
         """Concatenate the existing data with new data."""
 
         self.set_format(index=other_data_format)
         self._data = pd.concat([self._data.reset_index()[self.COLUMNS], other_data[self.COLUMNS]])
         self.set_format(index="image")
 
-    def from_hub(self, name: str, in_memory: bool = False) -> None:
+    def from_hub(self, dataset_name: str, repo_name: str = ORGANISATION, in_memory: bool = False) -> DetectionDataset:
         """Load a dataset from the Hugging Face Hub.
 
         Currently only datasets from the 'detection-datasets' organisation can be loaded.
@@ -80,13 +89,13 @@ class DetectionDataset:
             A DetectionDataset instance containing the loaded data.
         """
 
-        if name not in self.available_in_hub:
+        if dataset_name not in self.available_in_hub(repo_name=repo_name):
             raise ValueError(
-                f"""{name} is not available on the Hub.
+                f"""{dataset_name} is not available on the Hub.
             Use `DetectionDataset.available_in_hub() to get the list of available datasets."""
             )
 
-        path = "/".join([ORGANISATION, name])
+        path = "/".join([repo_name, dataset_name])
         ds = load_dataset(path=path)
         categories = ds[list(ds.keys())[0]].features["objects"].feature["category"]
 
@@ -129,21 +138,25 @@ class DetectionDataset:
         data = data.explode(["bbox_id", "category_id", "category", "bbox", "area"])
         data["bbox"] = [Bbox.from_voc(row.bbox, row.width, row.height, row.bbox_id) for _, row in data.iterrows()]
 
-        self.concat(other_data=data)
+        self._concat(other_data=data)
+
         return self
 
-    @property
-    def available_in_hub(self) -> List[str]:
+    def available_in_hub(self, repo_name: str = ORGANISATION) -> list[str]:
         """List the datasets available in the Hugging Face Hub.
+
+        Args:
+            repo_name: user or organisation where the dataset is stored on the Hub.
 
         Returns:
             List of names of datasets registered in the Hugging Face Hub, under the 'detection-datasets' organisation.
         """
 
-        datasets = api.list_datasets(author=ORGANISATION)
+        datasets = api.list_datasets(author=repo_name)
+
         return [dataset.id.split("/")[-1] for dataset in datasets]
 
-    def from_disk(self, dataset_format: str, path: str, **kwargs) -> None:
+    def from_disk(self, dataset_format: str, path: str, **kwargs) -> DetectionDataset:
         """Load a dataset from disk.
 
         This is a factory method that can read the dataset from different formats,
@@ -163,14 +176,14 @@ class DetectionDataset:
         reader = reader_factory.get(dataset_format=dataset_format, path=path, **kwargs)
         data = reader.read()
 
-        self.concat(other_data=data)
+        self._concat(other_data=data)
+
         return self
 
-    def to_hub(self, dataset_name: str, repo_name: str, **kwargs) -> None:
+    def to_hub(self, dataset_name: str, repo_name: str, **kwargs) -> DetectionDataset:
         """Push the dataset to the hub as a Parquet dataset.
 
-        This method wraps Hugging Face's DatasetDict.push_to_hub() method, check here for reference:
-        https://huggingface.co/docs/datasets/package_reference/main_classes#datasets.DatasetDict.push_to_hub
+        This method wraps Hugging Face's DatasetDict.push_to_hub() method.
 
         The dataset is pushed as a DatasetDict, meaning the each split (train, val, test), if present,
         will be a separate Dataset instance inside this DatasetDict.
@@ -184,6 +197,7 @@ class DetectionDataset:
 
         hf_dataset_dict = self.get_hf_dataset()
         hf_dataset_dict.push_to_hub(repo_id=repo_id, **kwargs)
+
         return self
 
     def get_hf_dataset(self) -> DatasetDict:
@@ -245,7 +259,7 @@ class DetectionDataset:
 
         return hf_dataset_dict
 
-    def to_disk(self, dataset_format: str, name: str, absolute_path: str) -> None:
+    def to_disk(self, dataset_format: str, name: str, absolute_path: str) -> DetectionDataset:
         """Write the dataset to disk.
 
         This is a factory method that can write the dataset to disk in the selected format (e.g. COCO, MMDET, YOLO)
@@ -263,6 +277,7 @@ class DetectionDataset:
 
         writer = writer_factory.get(dataset_format=dataset_format, dataset=self, name=name, path=absolute_path)
         writer.write()
+
         return self
 
     def set_format(self, index: str) -> pd.DataFrame:
@@ -321,7 +336,7 @@ class DetectionDataset:
 
         self._format = "bbox"
 
-    def select(self, n_images: int, seed: int = 42) -> None:
+    def select(self, n_images: int, seed: int = 42) -> DetectionDataset:
         """Limits the number of images to n_images.
 
         Args:
@@ -346,9 +361,10 @@ class DetectionDataset:
             )
 
         self._data = pd.concat(split_data)
+
         return self
 
-    def shuffle(self, seed: int = 42) -> None:
+    def shuffle(self, seed: int = 42) -> DetectionDataset:
         """Shuffles the dataset.
 
         Args:
@@ -365,9 +381,10 @@ class DetectionDataset:
             )
 
         self._data = pd.concat(split_data)
+
         return self
 
-    def split(self, splits: Iterable[float]) -> None:
+    def split(self, splits: Iterable[float]) -> DetectionDataset:
         """Splits the dataset into train, val and test.
 
         Args:
@@ -376,13 +393,10 @@ class DetectionDataset:
         """
 
         if len(splits) != 3:
-            raise ValueError(f"The splits must contain 3 elements, here it is: {splits}.")
+            raise ValueError("The splits must contain 3 elements.")
 
         if sum(splits) != 1:
             raise ValueError(f"The sum of the proportion for each split must be equal to 1, here it is: {sum(splits)}.")
-
-        if not all([isinstance(x, float) for x in splits]):
-            raise TypeError("Splits must all be floats, here it is: {}.".format(*[type(s) for s in splits]))
 
         data_by_image = self.set_format(index="image")
 
@@ -397,9 +411,10 @@ class DetectionDataset:
         data_test["split"] = Split.TEST.value
 
         self._data = pd.concat([data_train, data_val, data_test])
+
         return self
 
-    def map_categories(self, mapping: Dict[str, str]) -> None:
+    def map_categories(self, mapping: dict[str, str]) -> DetectionDataset:
         """Maps the categories to the new categories.
 
         The new categoy names replace the existing ones.
@@ -418,6 +433,7 @@ class DetectionDataset:
         data["category_id"] = data.loc[:, "category"].apply(lambda cat: categories.index(cat))
 
         self._data = data.set_index(["image_id", "bbox_id"])
+
         return self
 
     def show(self, image_id: int = None) -> PILImage:
@@ -439,6 +455,7 @@ class DetectionDataset:
         rows = data.loc[image_id]
 
         image = show_image_bbox(rows=rows)
+
         return image
 
     @property
@@ -466,7 +483,7 @@ class DetectionDataset:
         return len(data)
 
     @property
-    def splits(self) -> List[str]:
+    def splits(self) -> list[str]:
         """Returns the splits of the dataset.
 
         Returns:
@@ -476,7 +493,7 @@ class DetectionDataset:
         return self._data.split.unique().tolist()
 
     @property
-    def split_proportions(self) -> Tuple[float, float, float]:
+    def split_proportions(self) -> pd.DataFrame:
         """Returns the proportion of images in the train, val and test splits.
 
         Returns:
@@ -488,7 +505,7 @@ class DetectionDataset:
         return pd.DataFrame({s.value: [len(data[data.split == s.value]) / len(data)] for s in Split})
 
     @property
-    def categories(self) -> None:
+    def categories(self) -> pd.DataFrame:
         """Creates a DataFrame containing the categories found in the data with their id."""
 
         data = self.set_format(index="bbox")
@@ -502,7 +519,7 @@ class DetectionDataset:
         )
 
     @property
-    def category_names(self) -> List[str]:
+    def category_names(self) -> list[str]:
         """Returns the categories names.
 
         Returns:

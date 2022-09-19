@@ -98,7 +98,8 @@ Currently supported format for reading datasets are:
 
 The list of datasets available from the Hub is given by:
 ```Python
-DetectionDataset().available_in_hub
+DetectionDataset().available_in_hub()       # Search in the "detection-datasets" repository on the Hub.
+DetectionDataset().available_in_hub(repo_name=MY_REPO_OR_ORGANISATION)
 ```
 
 ## 2. Transform
