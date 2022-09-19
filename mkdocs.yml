@@ -45,5 +45,14 @@ plugins:
   - search
 
 markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      # guess_lang: False
+      # use_pygments: True
+      # noclasses: True
+      # pygments_style: github-dark
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
   - toc:
       permalink: "#"

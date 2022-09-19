@@ -86,7 +86,7 @@ dd.map_categories(mapping={'existing_category': 'new_category'})
 
 These transformations can be chained; for example here we select a subset of 10.000 images and create new train-val-test splits:
 
-```Python
+```Python hl_lines="3 4"
 dd = DetectionDataset()\
     .from_hub(name='fashionpedia')\
     .select(n_images=10000)\
@@ -155,7 +155,10 @@ Currently supported format for writing datasets are:
 The dataset can also be easily uploaded to the Hugging Face Hub, for reuse later on or in a different environment:
 
 ```Python
-dd.to_hub(dataset_name='MY_DATASET_NAME', repo_name='MY_REPO_OR_ORGANISATION')
+dd.to_hub(
+    dataset_name='MY_DATASET_NAME',
+    repo_name='MY_REPO_OR_ORGANISATION'
+)
 ```
 The dataset viewer on the Hub will work out of the box, and we encourage you to update the README in your new repo to make it easier for the comminuty to use the dataset.
 
