@@ -9,5 +9,5 @@ to load and transform datasets for object detection.
 The documentation consists of:
 
 1. [Getting started](getting_started.md)
-2. [Tutorials](tutorials.md)
+2. [Tutorials](./tutorials/tutorials.md)
 3. [API Reference](./reference/index.md)

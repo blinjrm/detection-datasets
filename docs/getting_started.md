@@ -32,7 +32,7 @@ config = {
     'dataset_format': 'coco',                   # the format of the dataset on disk
     'path': 'path/do/data/on/disk',             # where the dataset is located
     'splits': {                                 # how to read the files
-        'train': ('train.json', 'train'),
+        'train': ('train.json', 'train'),       # name of the split (annotation file, images directory)
         'test': ('test.json', 'test'),
     },
 }

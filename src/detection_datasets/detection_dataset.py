@@ -6,16 +6,14 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 from datasets import ClassLabel, Dataset, DatasetDict, Features, Image, Sequence, Value, load_dataset
-from huggingface_hub import HfApi
 from PIL import Image as PILImage
 
 from detection_datasets.bbox import Bbox
 from detection_datasets.utils.enums import Split
 from detection_datasets.utils.factories import reader_factory, writer_factory
+from detection_datasets.utils.hub import ORGANISATION, available_in_hub
 from detection_datasets.utils.visualization import show_image_bbox
 
-api = HfApi()
-ORGANISATION = "detection-datasets"
 CACHE_DIR = ".detection-datasets"
 SPLITS = ["train", "val", "test"]
 
@@ -89,7 +87,7 @@ class DetectionDataset:
             A DetectionDataset instance containing the loaded data.
         """
 
-        if dataset_name not in self.available_in_hub(repo_name=repo_name):
+        if dataset_name not in available_in_hub(repo_name=repo_name):
             raise ValueError(
                 f"""{dataset_name} is not available on the Hub.
             Use `DetectionDataset.available_in_hub() to get the list of available datasets."""
@@ -142,20 +140,6 @@ class DetectionDataset:
 
         return self
 
-    def available_in_hub(self, repo_name: str = ORGANISATION) -> list[str]:
-        """List the datasets available in the Hugging Face Hub.
-
-        Args:
-            repo_name: user or organisation where the dataset is stored on the Hub.
-
-        Returns:
-            List of names of datasets registered in the Hugging Face Hub, under the 'detection-datasets' organisation.
-        """
-
-        datasets = api.list_datasets(author=repo_name)
-
-        return [dataset.id.split("/")[-1] for dataset in datasets]
-
     def from_disk(self, dataset_format: str, path: str, **kwargs) -> DetectionDataset:
         """Load a dataset from disk.
 
@@ -173,7 +157,7 @@ class DetectionDataset:
             A DetectionDataset instance containing the loaded data.
         """
 
-        reader = reader_factory.get(dataset_format=dataset_format, path=path, **kwargs)
+        reader = reader_factory.get(dataset_format=dataset_format.lower(), path=path, **kwargs)
         data = reader.read()
 
         self._concat(other_data=data)
@@ -275,7 +259,7 @@ class DetectionDataset:
             **kwargs: Keyword arguments specific to the dataset_format.
         """
 
-        writer = writer_factory.get(dataset_format=dataset_format, dataset=self, name=name, path=absolute_path)
+        writer = writer_factory.get(dataset_format=dataset_format.lower(), dataset=self, name=name, path=absolute_path)
         writer.write()
 
         return self
