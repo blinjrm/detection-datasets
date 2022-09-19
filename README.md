@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="images/dd_logo.png" alt="logo" width="100"/>
+<img src="https://raw.githubusercontent.com/blinjrm/detection-datasets/main/images/dd_logo.png" alt="logo" width="100"/>
 
 <br>
 
@@ -31,7 +31,10 @@
 
 <br>
 
-`detection_datasets` aims to make it easier to work with detection datasets.
+`detection_datasets` aims to make it easier to work with detection datasets.  
+
+This library works alongside the [Detection dataset](https://huggingface.co/detection-datasets) organisation on the Hugging Face Hub, where some detection datasets have been uploaded in the format expected by the library, and are ready to use.  
+
 The main features are:
 * **Read** the dataset :
     * From disk if it has already been downloaded.
@@ -40,27 +43,33 @@ The main features are:
     * Select a subset of data.
     * Remap categories.
     * Create new train-val-test splits.
-* **Visualize** the annotations.
+* **Visualize** the annotations and images.
 * **Write** the dataset:
     * To disk, selecting the target detection format: `COCO`, `YOLO` and more to come.
     * To the Hugging Face Hub for easy reuse in a different environment and share with the community.
 
-## Requirements
+<br>
+
+# Getting started
+
+## 0. Setup
+
+### Requirements
 
 Python 3.8+
 
 `detection_datasets` is upon the great work of:
 
-* <a href="https://pandas.pydata.org/" class="external-link" target="_blank">Pandas</a> for manipulating data.
-* <a href="https://huggingface.co/" class="external-link" target="_blank">Hugging Face Dataset</a> to store and load datasets from the Hub.
+- [Pandas](https://pandas.pydata.org) for manipulating data.  
+- [Hugging Face Datasets](https://huggingface.co/docs/datasets/index) to store and load datasets from the Hub.
 
-## Installation
+### Installation
 
 ```console
 $ pip install detection_datasets
 ```
 
-# Examples
+### Import
 
 ```Python
 from detection_datasets import DetectionDataset
@@ -68,7 +77,7 @@ from detection_datasets import DetectionDataset
 
 ## 1. Read
 
-From local files:
+### From local filesystem
 
 ```Python
 config = {
@@ -87,24 +96,48 @@ dd.from_disk(**config)
 # dd = DetectionDataset().from_disk(**config)
 ```
 
-From the Hugging Face Hub:
+### From the Hugging Face Hub
+
+The `detection_dataset` library works alongside the [Detection dataset](https://huggingface.co/detection-datasets) organisation on the Hugging Face Hub, where some detection datasets have been uploaded in the format expected by the library, and are ready to use.
 
 ```Python
 dd = DetectionDataset().from_hub(name='fashionpedia')
 ```
-Currently supported format for reading datasets are:
-- COCO
-- *more to come*
+Currently supported format for reading datasets are:  
+- COCO  
+- *more to come*  
 
 The list of datasets available from the Hub is given by:
+
 ```Python
-DetectionDataset().available_in_hub()       # Search in the "detection-datasets" repository on the Hub.
+# Search in the "detection-datasets" repository on the Hub.
+DetectionDataset().available_in_hub()  
+
+# Search in another repository on the Hub.
 DetectionDataset().available_in_hub(repo_name=MY_REPO_OR_ORGANISATION)
 ```
 
 ## 2. Transform
 
-Here we select a subset of 10.000 images and create new train-val-test splits, overwritting the splits from the original dataset:
+The supported transformations are:
+
+```Python
+# Select a subset of images, perserving the splits and their proportions
+dd.select(n_images=1000)
+
+# Shuffle the dataset, perserving the splits and their proportions
+dd.shuffle(seed=42)
+
+# Create new train-val-test splits, overwritting the splits from the original dataset
+dd.split(splits=[0.8, 0.1, 0.1])
+
+# Map existing categories to new categories.
+# The annotations with a category absent from the mapping are dropped.
+dd.map_categories(mapping={'existing_category': 'new_category'})
+```
+
+These transformations can be chained; for example here we select a subset of 10.000 images and create new train-val-test splits:
+
 ```Python
 dd = DetectionDataset()\
     .from_hub(name='fashionpedia')\
@@ -140,16 +173,19 @@ dd.n_categories             # Number of categories
 ```
 
 You can also visualize a image with its annotations in a notebook:
+
 ```Python
 dd.show()                   # Shows a random image from the dataset
 dd.show(image_id=42)        # Shows the select image based on image_id
 ```
 
 <div align="center">
-<img src="images/show.png" alt="image with annotations" width="500"/>
+<img src="https://raw.githubusercontent.com/blinjrm/detection-datasets/main/images/show.png" alt="image with annotations" width="500"/>
 </div>
 
 ## 4. Write
+
+### To local filesystem
 
 Once the dataset is ready, you can write it to the local filesystem in a given format:
 
@@ -161,17 +197,20 @@ dd.to_disk(
 )
 ```
 
-Currently supported format for writing datasets are:
-- YOLO
-- MMDET
-- *more to come*
+Currently supported format for writing datasets are:  
+- YOLO  
+- MMDET  
+- *more to come*  
+
+### To the Hugging Face Hub
 
 The dataset can also be easily uploaded to the Hugging Face Hub, for reuse later on or in a different environment:
+
 ```Python
 dd.to_hub(dataset_name='MY_DATASET_NAME', repo_name='MY_REPO_OR_ORGANISATION')
 ```
 The dataset viewer on the Hub will work out of the box, and we encourage you to update the README in your new repo to make it easier for the comminuty to use the dataset.
 
 <div align="center">
-<img src="images/hub.png" alt="hub viewer" width="800"/>
+<img src="https://raw.githubusercontent.com/blinjrm/detection-datasets/main/images/hub.png" alt="hub viewer" width="800"/>
 </div>
