@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "detection_datasets"
-version = "0.2.1"
+version = "0.2.2"
 description = "Easily convert datasets between different formats for object detection"
 authors = ["Jerome Blin <blinjrm@gmail.com>"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/blinjrm/detection-dataset"
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
