@@ -66,7 +66,7 @@ class YoloWriter(BaseWriter):
 
         yaml_dataset = yaml.load(yaml_template_formated)
 
-        with open(os.path.join(self.dataset_dir, "dataset.yml"), "w") as outfile:
+        with open(os.path.join(self.dataset_dir, "dataset.yaml"), "w") as outfile:
             yaml.dump(yaml_dataset, outfile)
 
     def _make_dirs(self, split: str) -> None:
