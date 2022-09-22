@@ -50,6 +50,15 @@ The main features are:
 
 <br>
 
+<span style="background-color: #808080">Read the quick start bellow, or directly jump to the tutorials: </span>
+
+| Goal                                 | Tutorial | Colab |
+|--------------------------------------|:--------:|:-----:|
+| Load from disk and upload to the Hub | [Open in the docs](https://blinjrm.github.io/detection-datasets/tutorials/1_Read/)     | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/blinjrm/detection-datasets/blob/main/docs/tutorials/1_Read.ipynb)      |
+| Load from the Hub and transform          | [Open in the docs](https://blinjrm.github.io/detection-datasets/tutorials/2_Transform/)     | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/blinjrm/detection-datasets/blob/main/docs/tutorials/2_Transform.ipynb)      |
+
+<br>
+
 # Getting started
 
 ## 0. Setup
