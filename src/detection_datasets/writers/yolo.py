@@ -2,23 +2,9 @@ import os
 import shutil
 
 import pandas as pd
-from joblib import Parallel, delayed
-from ruamel.yaml import YAML
+import yaml
 
 from detection_datasets.writers import BaseWriter
-
-yaml = YAML()
-
-YAML_TEMPLATE = """
-path: {path}
-train: images/train
-val: images/val
-test:  images/test
-
-# Classes
-nc: {n_classes}
-names: [{class_names}]
-"""
 
 
 class YoloWriter(BaseWriter):
@@ -47,7 +33,7 @@ class YoloWriter(BaseWriter):
             self._make_dirs(split)
 
             split_data = self.data[self.data.split == split]
-            self._write_images_labels_parallel(split_data)
+            self._write_images_labels(split_data)
 
     def _write_yaml(self) -> None:
         """Writes the YAML file for the dataset.
@@ -58,13 +44,13 @@ class YoloWriter(BaseWriter):
 
         os.makedirs(self.dataset_dir)
 
-        yaml_template_formated = YAML_TEMPLATE.format(
-            path=self.dataset_dir,
-            n_classes=self.n_classes,
-            class_names=", ".join(self.class_names),
-        )
-
-        yaml_dataset = yaml.load(yaml_template_formated)
+        yaml_dataset = {
+            "train": f"{self.dataset_dir}/images/train",
+            "val": f"{self.dataset_dir}/images/val",
+            "test": f"{self.dataset_dir}/images/test",
+            "nc": self.n_classes,
+            "names": ", ".join(self.class_names),
+        }
 
         with open(os.path.join(self.dataset_dir, "dataset.yaml"), "w") as outfile:
             yaml.dump(yaml_dataset, outfile)
@@ -79,38 +65,32 @@ class YoloWriter(BaseWriter):
         os.makedirs(os.path.join(self.dataset_dir, "images", split))
         os.makedirs(os.path.join(self.dataset_dir, "labels", split))
 
-    def _write_images_labels_parallel(self, split_data: pd.DataFrame) -> None:
-        """Wraps _write_images_labels for parallelization.
+    def _write_images_labels(self, split_data: pd.DataFrame) -> None:
+        """Write the images and labels for a single image.
 
         Args:
             split_data: The data to write corresponding to a single split.
         """
 
-        Parallel()(delayed(self._write_images_labels)(row) for _, row in split_data.iterrows())
+        for _, row in split_data.iterrows():
+            row = row.to_frame().T
 
-    def _write_images_labels(self, row: pd.DataFrame) -> None:
-        """Write the images and labels for a single image.
+            # Images
+            in_file = row.image_path.values[0]
+            out_file = self._get_filename(row, "images")
 
-        Args:
-            row: The row of the dataframe to write.
-        """
+            shutil.copyfile(in_file, out_file)
 
-        row = row.to_frame().T
+            # Labels
+            out_file = self._get_filename(row, "labels")
+            data = row.explode(["bbox_id", "category_id", "area", "bbox"])
 
-        # Images
-        in_file = row.image_path.values[0]
-        out_file = self._get_filename(row, "images")
-
-        shutil.copyfile(in_file, out_file)
-
-        # Labels
-        out_file = self._get_filename(row, "labels")
-        data = row.explode(["bbox_id", "category_id", "area", "bbox"])
-
-        with open(out_file, "w") as f:
-            for _, r in data.iterrows():
-                labels = " ".join((str(r.category_id), str(r.bbox[0]), str(r.bbox[1]), str(r.bbox[2]), str(r.bbox[3])))
-                f.write(labels + "\n")
+            with open(out_file, "w") as f:
+                for _, r in data.iterrows():
+                    labels = " ".join(
+                        (str(r.category_id), str(r.bbox[0]), str(r.bbox[1]), str(r.bbox[2]), str(r.bbox[3]))
+                    )
+                    f.write(labels + "\n")
 
     def _get_filename(self, row: pd.Series, task: str) -> str:
         """Get the filename for the given row and task.

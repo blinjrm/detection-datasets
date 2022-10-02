@@ -75,8 +75,6 @@ class DetectionDataset:
     def from_hub(self, dataset_name: str, repo_name: str = ORGANISATION, in_memory: bool = False) -> DetectionDataset:
         """Load a dataset from the Hugging Face Hub.
 
-        Currently only datasets from the 'detection-datasets' organisation can be loaded.
-
         Args:
             name: name of the dataset, without the organisation's prefix.
             in_memory: whether to keep the images in memory. Set to False if the system runs
