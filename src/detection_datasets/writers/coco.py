@@ -18,7 +18,9 @@ class CocoWriter(BaseWriter):
     def write(self) -> None:
         """Write the dataset to disk.
 
-        TODO: add more details here.
+        For the COCO format, the associated steps are:
+            1. Write the annotations json files for each split.
+            2. Write the images for each split.
         """
 
         self._write_annotations()
@@ -103,7 +105,6 @@ class CocoWriter(BaseWriter):
             for _, row in split_data.iterrows():
                 row = row.to_frame().T
 
-                # Images
                 in_file = row.image_path.values[0]
                 out_file = os.path.join(self.dataset_dir, split, str(row["image_id"].values[0]) + ".jpg")
 
