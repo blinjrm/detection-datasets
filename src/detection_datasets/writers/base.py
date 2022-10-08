@@ -23,6 +23,7 @@ class BaseWriter(ABC):
             path: Path to the directory where the dataset will be created.
         """
 
+        self.dataset = dataset
         self.data = dataset.set_format(index="image").reset_index()
         self.name = name
         self.path = path

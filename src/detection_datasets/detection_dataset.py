@@ -96,8 +96,7 @@ class DetectionDataset:
         categories = ds[list(ds.keys())[0]].features["objects"].feature["category"]
 
         if not in_memory:
-            DOWNLOAD_PATH = Path.home() / CACHE_DIR
-            DOWNLOAD_PATH.mkdir(parents=True, exist_ok=True)
+            DOWNLOAD_PATH = self._get_temp_dir()
 
             def download_images(row):
                 file_path = "".join([DOWNLOAD_PATH.as_posix(), "/", str(row["image_id"]), ".jpg"])
@@ -109,7 +108,7 @@ class DetectionDataset:
                 download_images,
                 remove_columns="image",
                 load_from_cache_file=False,
-                desc="Moving images from memory to disk",
+                desc="Extracting images from parquet",
             )
 
         df_splits = []
@@ -177,12 +176,13 @@ class DetectionDataset:
 
         repo_id = "/".join([repo_name, dataset_name])
 
-        hf_dataset_dict = self.get_hf_dataset()
+        hf_dataset_dict = self._get_hf_dataset()
         hf_dataset_dict.push_to_hub(repo_id=repo_id, **kwargs)
+        print(f"The dataset was uploaded to https://huggingface.co/datasets/{repo_id}")
 
         return self
 
-    def get_hf_dataset(self) -> DatasetDict:
+    def _get_hf_dataset(self) -> DatasetDict:
         """Get the data formatted as an Hugging Face DatasetDict instance.
 
         The DatasetDict contains a Dataset for each split present in the data.
@@ -192,7 +192,9 @@ class DetectionDataset:
             Data formatted as an Hugging Face DatasetDict instance
         """
 
-        data = self.set_format(index="image").reset_index()
+        data = self.set_format(index="image").copy().reset_index()
+        data["image_id"] = data.loc[:, "image_id"].astype(int)
+        data["bbox_id"] = [[int(bbox_id) for bbox_id in bbox_ids] for bbox_ids in data.bbox_id]
         data["bbox"] = [[bbox.to_voc() for bbox in bboxes] for bboxes in data.bbox]
 
         hf_dataset_dict = DatasetDict()
@@ -219,22 +221,7 @@ class DetectionDataset:
 
             df = pd.DataFrame.from_dict(images_data)
 
-            features = Features(
-                {
-                    "image_id": Value(dtype="int64"),
-                    "image": Image(decode=True),
-                    "width": Value(dtype="int64"),
-                    "height": Value(dtype="int64"),
-                    "objects": Sequence(
-                        {
-                            "bbox_id": Value(dtype="int64"),
-                            "category": ClassLabel(names=self.category_names),
-                            "bbox": Sequence(feature=Value(dtype="float64"), length=4),
-                            "area": Value(dtype="int64"),
-                        }
-                    ),
-                }
-            )
+            features = self._get_hf_features()
 
             ds = Dataset.from_pandas(df=df, features=features, split=split)
             hf_dataset_dict[split] = ds
@@ -261,6 +248,37 @@ class DetectionDataset:
         writer.write()
 
         return self
+
+    @staticmethod
+    def _get_temp_dir() -> str:
+        """Get the path for the temp directory, create it if needed.
+
+        Returns:
+            The path to the library's temp directory.
+        """
+
+        DOWNLOAD_PATH = Path.home() / CACHE_DIR
+        DOWNLOAD_PATH.mkdir(parents=True, exist_ok=True)
+
+        return DOWNLOAD_PATH
+
+    def _get_hf_features(self) -> Features:
+        return Features(
+            {
+                "image_id": Value(dtype="int64"),
+                "image": Image(decode=True),
+                "width": Value(dtype="int64"),
+                "height": Value(dtype="int64"),
+                "objects": Sequence(
+                    {
+                        "bbox_id": Value(dtype="int64"),
+                        "category": ClassLabel(names=self.category_names),
+                        "bbox": Sequence(feature=Value(dtype="float64"), length=4),
+                        "area": Value(dtype="float64"),
+                    }
+                ),
+            }
+        )
 
     def set_format(self, index: str) -> pd.DataFrame:
         if index == self._format:
