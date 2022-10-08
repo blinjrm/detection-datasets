@@ -49,12 +49,10 @@ class CocoWriter(BaseWriter):
         for i in range(len(data)):
             result.append(
                 {
-                    i: {
-                        "file_name": str(data.loc[i, "image_path"]).split("/")[-1],
-                        "height": data.loc[i, "height"],
-                        "width": data.loc[i, "width"],
-                        "id": int(data.loc[i, "image_id"]),  # convert from numpy int64
-                    }
+                    "file_name": str(data.loc[i, "image_path"]).split("/")[-1],
+                    "height": data.loc[i, "height"],
+                    "width": data.loc[i, "width"],
+                    "id": int(data.loc[i, "image_id"]),  # convert from numpy int64
                 }
             )
 
@@ -68,14 +66,12 @@ class CocoWriter(BaseWriter):
         for i in range(len(data)):
             result.append(
                 {
-                    i: {
-                        "area": data.loc[i, "area"],
-                        "iscrowd": 0,
-                        "image_id": int(data.loc[i, "image_id"]),
-                        "bbox": data.loc[i, "bbox"],
-                        "category_id": data.loc[i, "category_id"],
-                        "id": int(data.loc[i, "bbox_id"]),
-                    }
+                    "area": data.loc[i, "area"],
+                    "iscrowd": 0,
+                    "image_id": int(data.loc[i, "image_id"]),
+                    "bbox": data.loc[i, "bbox"],
+                    "category_id": data.loc[i, "category_id"],
+                    "id": int(data.loc[i, "bbox_id"]),
                 }
             )
 
@@ -88,10 +84,8 @@ class CocoWriter(BaseWriter):
         for i in range(len(data)):
             result.append(
                 {
-                    i: {
-                        "id": int(data.loc[i, "category_id"]),
-                        "name": data.loc[i, "category"],
-                    }
+                    "id": int(data.loc[i, "category_id"]),
+                    "name": data.loc[i, "category"],
                 }
             )
 
