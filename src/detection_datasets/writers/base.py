@@ -18,7 +18,7 @@ class BaseWriter(ABC):
         """Base class for writing datasets to disk.
 
         Args:
-            dataset: Dataframe containing the dataset to write to disk.
+            dataset: DetectionDataset instance.
             name: Name of the dataset to be created in the "path" directory.
             path: Path to the directory where the dataset will be created.
         """

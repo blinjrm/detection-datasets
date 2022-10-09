@@ -185,6 +185,19 @@ class DetectionDataset:
 
         Returns:
             The DetectionDataset instance. This allows for method cascading.
+
+        Example:
+            ```Python
+            config = {
+                "dataset_format": "coco",
+                "path": "PATH/TO/DATASET",
+                "splits": {
+                    "train": (train_annotations.json, 'train'),
+                    "val": (test_annotations.json, 'test'),
+                },
+            }
+            dd = DetectionDataset().from_disk(**config)
+            ```
         """
 
         reader = reader_factory.get(dataset_format=dataset_format.lower(), path=path, **kwargs)

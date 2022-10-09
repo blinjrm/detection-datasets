@@ -43,7 +43,12 @@ nav:
       - Writers: reference/writers.md
 
 plugins:
-  - mkdocstrings
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          options:
+            docstring_style: google
   - section-index
   - search
   - mkdocs-jupyter:
@@ -61,3 +66,6 @@ markdown_extensions:
   - pymdownx.superfences
   - toc:
       permalink: "#"
+
+watch:
+  - src
