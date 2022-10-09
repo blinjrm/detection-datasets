@@ -4,6 +4,11 @@ import pandas as pd
 
 
 class BaseReader(ABC):
+    """This is the base class that other readers inherit from.
+
+    It enforces the use of the `read()` method in all writers.
+    """
+
     def __init__(self, path: str) -> None:
         """Base class for loading datasets in memory.
 

@@ -39,6 +39,10 @@ class DetectionDataset:
         """Initialize the dataset.
 
         Don't call the constructr directly, use `from_hub()` or `from_disk()` methods instead.
+
+        Args:
+            data: The data used to initialize the dataset.
+                Defaults to None.
         """
 
         self._format = "init"
@@ -48,12 +52,25 @@ class DetectionDataset:
 
     @property
     def data(self) -> pd.DataFrame:
-        """Getter for the data, with annotations grouped by images."""
+        """Getter for the data, with annotations grouped by images.
+
+        Returns:
+            The data contained in the dataset as a Pandas DataFrame.
+        """
 
         return self.get_data()
 
     def get_data(self, index: str = "image") -> pd.DataFrame:
-        """Getter for the data, with the possibility to specify the format."""
+        """Getter for the data, with the possibility to specify the format.
+
+        Args:
+            index: The desired format of the data.
+                Can be either "image" or "bbox".
+                Defaults to "image".
+
+        Returns:
+            The data contained in the dataset as a Pandas DataFrame in the specified format.
+        """
 
         data = self.set_format(index=index)
 
@@ -61,12 +78,24 @@ class DetectionDataset:
 
     @property
     def format(self) -> str:
-        """Getter for the current format of the data ("image" or "bbox")."""
+        """Getter for the current format of the data, which can either be "image" or "bbox".
+
+        Returns:
+            The current format of the data.
+        """
 
         return self._format
 
-    def _concat(self, other_data: pd.DataFrame, other_data_format: str = "bbox") -> pd.DataFrame:
-        """Concatenate the existing data with new data."""
+    def _concat(self, other_data: pd.DataFrame, other_data_format: str = "bbox") -> None:
+        """Concatenate the existing data with new data.
+
+        This allows to load multiple datasets, potentially from different sources (disk & hub) into one larger dataset.
+
+        Args:
+            other_data: The data being added to the dataset.
+            other_data_format: The format of the new data.
+                Defaults to "bbox".
+        """
 
         self.set_format(index=other_data_format)
         self._data = pd.concat([self._data.reset_index()[self.COLUMNS], other_data[self.COLUMNS]])
@@ -75,16 +104,18 @@ class DetectionDataset:
     def from_hub(self, dataset_name: str, repo_name: str = ORGANISATION, in_memory: bool = False) -> DetectionDataset:
         """Load a dataset from the Hugging Face Hub.
 
-        Currently only datasets from the 'detection-datasets' organisation can be loaded.
-
         Args:
-            name: name of the dataset, without the organisation's prefix.
-            in_memory: whether to keep the images in memory. Set to False if the system runs
-                out of memory, then the images will be downloaded and only the path to these
-                images will be saved in the data. Defaults to True.
+            dataset_name: name of the dataset, without the organisation's prefix.
+            repo_name: name of the Hugging Face profile or organisation where the dataset is stored.
+                Defaults to "detection-datasets".
+            in_memory: whether to keep the images in memory.
+                Set to "True" to keep the image in memory in the Pandas DataFrame, if the dataset is small.
+                Set to "False" if the system runs out of memory, then the images will be downloaded
+                and only the path to these images will be saved in the data.
+                Defaults to False.
 
         Returns:
-            A DetectionDataset instance containing the loaded data.
+            The DetectionDataset instance. This allows for method cascading.
         """
 
         if dataset_name not in available_in_hub(repo_name=repo_name):
@@ -98,8 +129,7 @@ class DetectionDataset:
         categories = ds[list(ds.keys())[0]].features["objects"].feature["category"]
 
         if not in_memory:
-            DOWNLOAD_PATH = Path.home() / CACHE_DIR
-            DOWNLOAD_PATH.mkdir(parents=True, exist_ok=True)
+            DOWNLOAD_PATH = self._get_temp_dir()
 
             def download_images(row):
                 file_path = "".join([DOWNLOAD_PATH.as_posix(), "/", str(row["image_id"]), ".jpg"])
@@ -111,7 +141,7 @@ class DetectionDataset:
                 download_images,
                 remove_columns="image",
                 load_from_cache_file=False,
-                desc="Moving images from memory to disk",
+                desc="Extracting images from parquet",
             )
 
         df_splits = []
@@ -154,7 +184,20 @@ class DetectionDataset:
             **kwargs: Keyword arguments specific to the dataset_format.
 
         Returns:
-            A DetectionDataset instance containing the loaded data.
+            The DetectionDataset instance. This allows for method cascading.
+
+        Example:
+            ```Python
+            config = {
+                "dataset_format": "coco",
+                "path": "PATH/TO/DATASET",
+                "splits": {
+                    "train": (train_annotations.json, 'train'),
+                    "val": (test_annotations.json, 'test'),
+                },
+            }
+            dd = DetectionDataset().from_disk(**config)
+            ```
         """
 
         reader = reader_factory.get(dataset_format=dataset_format.lower(), path=path, **kwargs)
@@ -175,16 +218,20 @@ class DetectionDataset:
         Args:
             dataset_name: name of the dataset inside the user/organisation's repository.
             repo_name: user of organisation to push the dataset to.
+
+        Returns:
+            The DetectionDataset instance. This allows for method cascading.
         """
 
         repo_id = "/".join([repo_name, dataset_name])
 
-        hf_dataset_dict = self.get_hf_dataset()
+        hf_dataset_dict = self._get_hf_dataset()
         hf_dataset_dict.push_to_hub(repo_id=repo_id, **kwargs)
+        print(f"The dataset was uploaded to https://huggingface.co/datasets/{repo_id}")
 
         return self
 
-    def get_hf_dataset(self) -> DatasetDict:
+    def _get_hf_dataset(self) -> DatasetDict:
         """Get the data formatted as an Hugging Face DatasetDict instance.
 
         The DatasetDict contains a Dataset for each split present in the data.
@@ -194,7 +241,9 @@ class DetectionDataset:
             Data formatted as an Hugging Face DatasetDict instance
         """
 
-        data = self.set_format(index="image").reset_index()
+        data = self.set_format(index="image").copy().reset_index()
+        data["image_id"] = data.loc[:, "image_id"].astype(int)
+        data["bbox_id"] = [[int(bbox_id) for bbox_id in bbox_ids] for bbox_ids in data.bbox_id]
         data["bbox"] = [[bbox.to_voc() for bbox in bboxes] for bboxes in data.bbox]
 
         hf_dataset_dict = DatasetDict()
@@ -221,22 +270,7 @@ class DetectionDataset:
 
             df = pd.DataFrame.from_dict(images_data)
 
-            features = Features(
-                {
-                    "image_id": Value(dtype="int64"),
-                    "image": Image(decode=True),
-                    "width": Value(dtype="int64"),
-                    "height": Value(dtype="int64"),
-                    "objects": Sequence(
-                        {
-                            "bbox_id": Value(dtype="int64"),
-                            "category": ClassLabel(names=self.category_names),
-                            "bbox": Sequence(feature=Value(dtype="float64"), length=4),
-                            "area": Value(dtype="int64"),
-                        }
-                    ),
-                }
-            )
+            features = self._get_hf_features()
 
             ds = Dataset.from_pandas(df=df, features=features, split=split)
             hf_dataset_dict[split] = ds
@@ -254,9 +288,13 @@ class DetectionDataset:
                 - "yolo": YOLO format
                 - "mmdet": MMDET internal format, see:
                     https://mmdetection.readthedocs.io/en/latest/tutorials/customize_dataset.html#reorganize-new-data-format-to-middle-format
+                - "coco": COCO format
             name: Name of the dataset to be created in the "path" directory.
             absolute_path: Absolute path to the directory where the dataset will be created.
             **kwargs: Keyword arguments specific to the dataset_format.
+
+        Returns:
+            The DetectionDataset instance. This allows for method cascading.
         """
 
         writer = writer_factory.get(dataset_format=dataset_format.lower(), dataset=self, name=name, path=absolute_path)
@@ -264,7 +302,60 @@ class DetectionDataset:
 
         return self
 
+    @staticmethod
+    def _get_temp_dir() -> str:
+        """Get the path for the temp directory, create it if needed.
+
+        Returns:
+            The path to the library's temp directory.
+        """
+
+        DOWNLOAD_PATH = Path.home() / CACHE_DIR
+        DOWNLOAD_PATH.mkdir(parents=True, exist_ok=True)
+
+        return DOWNLOAD_PATH
+
+    def _get_hf_features(self) -> Features:
+        """Get the feature types for the Hugging Face dataset.
+
+        Returns:
+            Features for the Hugging Face dataset.
+        """
+
+        return Features(
+            {
+                "image_id": Value(dtype="int64"),
+                "image": Image(decode=True),
+                "width": Value(dtype="int64"),
+                "height": Value(dtype="int64"),
+                "objects": Sequence(
+                    {
+                        "bbox_id": Value(dtype="int64"),
+                        "category": ClassLabel(names=self.category_names),
+                        "bbox": Sequence(feature=Value(dtype="float64"), length=4),
+                        "area": Value(dtype="float64"),
+                    }
+                ),
+            }
+        )
+
     def set_format(self, index: str) -> pd.DataFrame:
+        """Set the format of the data.
+
+        The data contained in the dataset can either have:
+        - One row per image, with the annotations grouped as a list
+        - One row per annotation, with each image appearing on multiple rows
+
+        Args:
+            index: How to organise the data, can be "image" or "bbox".
+
+        Raises:
+            ValueError: If the specified format is unknown.
+
+        Returns:
+            Data contained in the dataset.
+        """
+
         if index == self._format:
             pass
         elif index == "image":
@@ -327,6 +418,9 @@ class DetectionDataset:
             n_images: Number of images to include in the dataset.
                 The original proportion of images between splits will be respected.
             seed: Random seed.
+
+        Returns:
+            The DetectionDataset instance. This allows for method cascading.
         """
 
         data_by_image = self.set_format(index="image")
@@ -353,6 +447,9 @@ class DetectionDataset:
 
         Args:
             seed: Random seed.
+
+        Returns:
+            The DetectionDataset instance. This allows for method cascading.
         """
 
         data_by_image = self.set_format(index="image")
@@ -373,7 +470,11 @@ class DetectionDataset:
 
         Args:
             splits: Iterable containing the proportion of images to include in the train, val and test splits.
-                The sum of the values in the iterable must be equal to 1. The original splits will be overwritten.
+                The sum of the values in the iterable must be equal to 1.
+                The original splits will be overwritten.
+
+        Returns:
+            The DetectionDataset instance. This allows for method cascading.
         """
 
         if len(splits) != 3:
@@ -407,6 +508,9 @@ class DetectionDataset:
 
         Args:
             mapping: A dictionnary mapping original categories to new categories.
+
+        Returns:
+            The DetectionDataset instance. This allows for method cascading.
         """
 
         data = self.set_format(index="bbox").reset_index()
@@ -424,7 +528,9 @@ class DetectionDataset:
         """Show the image with bounding boxes and labels.
 
         Args:
-            image_id: Id of the image. If not provided, a random image is selected. Defaults to None.
+            image_id: Id of the image.
+                If not provided, a random image is selected.
+                Defaults to None.
 
         Returns:
             Image with bounding boxes and labels.
@@ -439,6 +545,8 @@ class DetectionDataset:
         rows = data.loc[image_id]
 
         image = show_image_bbox(rows=rows)
+
+        print(f"Showing image id {image_id}.")
 
         return image
 
@@ -490,7 +598,11 @@ class DetectionDataset:
 
     @property
     def categories(self) -> pd.DataFrame:
-        """Creates a DataFrame containing the categories found in the data with their id."""
+        """Creates a DataFrame containing the categories found in the data with their id.
+
+        Returns:
+            A dataframe containing the categories with the category_id as index.
+        """
 
         data = self.set_format(index="bbox")
 

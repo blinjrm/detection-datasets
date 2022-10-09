@@ -9,11 +9,52 @@ from detection_datasets.readers import BaseReader
 
 
 class CocoReader(BaseReader):
+    """Read a dataset from disk in the COCO format.
+
+    You don't need to use the reader directly, use the `from_disk(dataset_format="coco", *args, **kwargs)` method
+    of the DetectionDataset class instead.
+    This is equivalent to first calling the reader, and then initializing the DetectionDataset instance
+    with the data returned by the reader.
+
+    Example:
+        ```Python
+        config = {
+            "path": "PATH/TO/DATASET",
+            "splits": {
+                "train": (train_annotations.json, 'train'),
+                "val": (test_annotations.json, 'test'),
+            },
+        }
+        reader = CocoReader(**config)
+        data = reader.read()
+        dd = DetectionDataset(data=data)
+        ```
+    """
+
     def __init__(self, path: str, splits: Dict[str, Tuple[str, str]]) -> None:
+        """Load a dataset from disk.
+
+        This is a factory method that can read the dataset from different formats,
+        when the dataset is already in a local directory.
+
+        Args:
+            path: Path to the dataset on the local filesystem.
+            splits: Dictionnary indicating how to read the data.
+                - The key is the name of the split
+                - The value is a tuple containing the name of the annotation file for this split,
+                    and the directory containing the images for this split.
+        """
+
         super().__init__(path)
         self.splits = splits
 
     def read(self) -> pd.DataFrame():
+        """Read the dataset from disk.
+
+        Returns:
+            DataFrame containing the data for all splits, with one row per annotation.
+        """
+
         annotation_dataframes = []
         for split, (annotation_file, images_dir) in self.splits.items():
             images_path_prefix = os.path.join(self.path, images_dir)

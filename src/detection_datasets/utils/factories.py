@@ -1,7 +1,7 @@
 from typing import Union
 
 from detection_datasets.readers import BaseReader, CocoReader
-from detection_datasets.writers import BaseWriter, MmdetWriter, YoloWriter
+from detection_datasets.writers import BaseWriter, CocoWriter, MmdetWriter, YoloWriter
 
 
 class Factory:
@@ -26,3 +26,4 @@ reader_factory.register("coco", CocoReader)
 writer_factory = Factory()
 writer_factory.register("mmdet", MmdetWriter)
 writer_factory.register("yolo", YoloWriter)
+writer_factory.register("coco", CocoWriter)
