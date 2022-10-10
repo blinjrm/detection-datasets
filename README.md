@@ -216,6 +216,7 @@ dd.to_disk(
 
 Currently supported format for writing datasets are:  
 - YOLO  
+- COCO
 - MMDET  
 - *more to come*  
 

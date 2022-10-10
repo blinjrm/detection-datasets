@@ -9,18 +9,16 @@ if TYPE_CHECKING:
 
 
 class BaseWriter(ABC):
-    def __init__(
-        self,
-        dataset: DetectionDataset,
-        name: str,
-        path: str,
-    ) -> None:
+    def __init__(self, dataset: DetectionDataset, name: str, path: str, move_or_copy_images: str = "copy") -> None:
         """Base class for writing datasets to disk.
 
         Args:
             dataset: DetectionDataset instance.
             name: Name of the dataset to be created in the "path" directory.
             path: Path to the directory where the dataset will be created.
+            move_or_copy_images: Wether to move or copy images from the source
+                directory to the directory of the new dataset written to disk.
+                Defaults to 'copy'.
         """
 
         self.dataset = dataset
@@ -32,6 +30,12 @@ class BaseWriter(ABC):
         self.n_classes = dataset.n_categories
         self.n_images = dataset.n_images
         self.split_proportions = dataset.split_proportions
+
+        if move_or_copy_images.lower() in ["move", "copy"]:
+            self.move_or_copy_images = move_or_copy_images
+        else:
+            print(f"Incorrect value ({move_or_copy_images}) for move_or_copy_images, defaulting to 'copy'.")
+            self.move_or_copy_images = "copy"
 
     @abstractmethod
     def write(self) -> None:
