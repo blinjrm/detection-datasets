@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from pathlib import Path
+import os
+import shutil
 from typing import Iterable
 
 import numpy as np
@@ -9,13 +10,11 @@ from datasets import ClassLabel, Dataset, DatasetDict, Features, Image, Sequence
 from PIL import Image as PILImage
 
 from detection_datasets.bbox import Bbox
-from detection_datasets.utils.enums import Split
+from detection_datasets.utils.cache import get_temp_dir
+from detection_datasets.utils.constants import TEST, TRAIN, VALIDATION
 from detection_datasets.utils.factories import reader_factory, writer_factory
 from detection_datasets.utils.hub import ORGANISATION, available_in_hub
 from detection_datasets.utils.visualization import show_image_bbox
-
-CACHE_DIR = ".detection-datasets"
-SPLITS = ["train", "val", "test"]
 
 
 class DetectionDataset:
@@ -86,6 +85,25 @@ class DetectionDataset:
 
         return self._format
 
+    @property
+    def temp_dir_instance(self) -> str:
+        """Name of the temporary directory used by the DetectionDataset instance.
+
+        When downloading images from the Hub, images are first downloaded as parquet files in the Hugging Face
+        cache directory, before being extracted as jpeg files in the detection_dataset cache.
+        Each instance creates its own sub-directory in the detection_dataset cache.
+        The subdirectory for an instance is named after its id.
+
+        Returns:
+            Path to the ssubdirectory for the instance in the detection_dataset cache.
+        """
+
+        lib_temp_dir = get_temp_dir()
+        temp_dir = os.path.join(lib_temp_dir.as_posix(), str(id(self)))
+        os.makedirs(temp_dir, exist_ok=True)
+
+        return temp_dir
+
     def _concat(self, other_data: pd.DataFrame, other_data_format: str = "bbox") -> None:
         """Concatenate the existing data with new data.
 
@@ -101,18 +119,13 @@ class DetectionDataset:
         self._data = pd.concat([self._data.reset_index()[self.COLUMNS], other_data[self.COLUMNS]])
         self.set_format(index="image")
 
-    def from_hub(self, dataset_name: str, repo_name: str = ORGANISATION, in_memory: bool = False) -> DetectionDataset:
+    def from_hub(self, dataset_name: str, repo_name: str = ORGANISATION) -> DetectionDataset:
         """Load a dataset from the Hugging Face Hub.
 
         Args:
             dataset_name: name of the dataset, without the organisation's prefix.
             repo_name: name of the Hugging Face profile or organisation where the dataset is stored.
                 Defaults to "detection-datasets".
-            in_memory: whether to keep the images in memory.
-                Set to "True" to keep the image in memory in the Pandas DataFrame, if the dataset is small.
-                Set to "False" if the system runs out of memory, then the images will be downloaded
-                and only the path to these images will be saved in the data.
-                Defaults to False.
 
         Returns:
             The DetectionDataset instance. This allows for method cascading.
@@ -128,21 +141,18 @@ class DetectionDataset:
         ds = load_dataset(path=path)
         categories = ds[list(ds.keys())[0]].features["objects"].feature["category"]
 
-        if not in_memory:
-            DOWNLOAD_PATH = self._get_temp_dir()
+        def download_images(row):
+            file_path = "".join([self.temp_dir_instance, "/", str(row["image_id"]), ".jpg"])
+            row["image"].save(file_path)
+            row["image_path"] = file_path
+            return row
 
-            def download_images(row):
-                file_path = "".join([DOWNLOAD_PATH.as_posix(), "/", str(row["image_id"]), ".jpg"])
-                row["image"].save(file_path)
-                row["image_path"] = file_path
-                return row
-
-            ds = ds.map(
-                download_images,
-                remove_columns="image",
-                load_from_cache_file=False,
-                desc="Extracting images from parquet",
-            )
+        ds = ds.map(
+            download_images,
+            remove_columns="image",
+            load_from_cache_file=False,
+            desc="Extracting images from parquet",
+        )
 
         df_splits = []
         for key in ds.keys():
@@ -302,19 +312,6 @@ class DetectionDataset:
 
         return self
 
-    @staticmethod
-    def _get_temp_dir() -> str:
-        """Get the path for the temp directory, create it if needed.
-
-        Returns:
-            The path to the library's temp directory.
-        """
-
-        DOWNLOAD_PATH = Path.home() / CACHE_DIR
-        DOWNLOAD_PATH.mkdir(parents=True, exist_ok=True)
-
-        return DOWNLOAD_PATH
-
     def _get_hf_features(self) -> Features:
         """Get the feature types for the Hugging Face dataset.
 
@@ -432,10 +429,10 @@ class DetectionDataset:
 
         split_data = []
 
-        for split in Split:
-            sample_size = int(n_images * self.split_proportions[split.value])
+        for split in self.splits:
+            sample_size = int(n_images * self.split_proportions[split])
             split_data.append(
-                data_by_image.loc[data_by_image.split == split.value, :].sample(n=sample_size, random_state=seed)
+                data_by_image.loc[data_by_image.split == split, :].sample(n=sample_size, random_state=seed)
             )
 
         self._data = pd.concat(split_data)
@@ -456,10 +453,8 @@ class DetectionDataset:
 
         split_data = []
 
-        for split in Split:
-            split_data.append(
-                data_by_image.loc[data_by_image.split == split.value, :].sample(frac=1, random_state=seed)
-            )
+        for split in self.splits:
+            split_data.append(data_by_image.loc[data_by_image.split == split, :].sample(frac=1, random_state=seed))
 
         self._data = pd.concat(split_data)
 
@@ -491,9 +486,9 @@ class DetectionDataset:
 
         data_by_image = data_by_image.sample(frac=1, random_state=42)
         data_train, data_val, data_test, _ = np.split(data_by_image, [n_train, n_val, n_test])
-        data_train["split"] = Split.TRAIN.value
-        data_val["split"] = Split.VAL.value
-        data_test["split"] = Split.TEST.value
+        data_train["split"] = TRAIN
+        data_val["split"] = VALIDATION
+        data_test["split"] = TEST
 
         self._data = pd.concat([data_train, data_val, data_test])
 
@@ -594,7 +589,7 @@ class DetectionDataset:
 
         data = self.set_format(index="image")
 
-        return pd.DataFrame({s.value: [len(data[data.split == s.value]) / len(data)] for s in Split})
+        return pd.DataFrame({s: [len(data[data.split == s]) / len(data)] for s in self.splits})
 
     @property
     def categories(self) -> pd.DataFrame:
@@ -633,3 +628,16 @@ class DetectionDataset:
         """
 
         return self.categories["category"].nunique()
+
+    def __del__(self) -> None:
+        self.delete()
+
+    def delete(self) -> None:
+        """Delete the instance and the temporary directory it may use.
+
+        The temporary directory is created by a DetectionDataset instance when calling the `from_hub()` method, and is
+        used to store image files.
+        """
+
+        shutil.rmtree(self.temp_dir_instance)
+        print("The instance and its temporary directory have been deleted.")

@@ -33,7 +33,7 @@
 
 `detection_datasets` aims to make it easier to work with detection datasets.  
 
-This library works alongside the [Detection dataset](https://huggingface.co/detection-datasets) organisation on the Hugging Face Hub, where some detection datasets have been uploaded in the format expected by the library, and are ready to use.  
+This library works alongside the [Detection dataset](https://huggingface.co/detection-datasets) organisation on the 🤗 Hub, where some detection datasets have been uploaded in the format expected by the library, and are ready to use.  
 
 The main features are:
 * **Read** the dataset :
@@ -216,6 +216,7 @@ dd.to_disk(
 
 Currently supported format for writing datasets are:  
 - YOLO  
+- COCO
 - MMDET  
 - *more to come*  
 

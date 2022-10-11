@@ -1,5 +1,4 @@
 import os
-import shutil
 
 import pandas as pd
 import yaml
@@ -16,7 +15,6 @@ class YoloWriter(BaseWriter):
         """Initialize the YoloWriter."""
 
         super().__init__(**kwargs)
-        self.data["bbox"] = [[bbox.to_yolo() for bbox in bboxes] for bboxes in self.data.bbox]
 
     def write(self) -> None:
         """Write the dataset to disk.
@@ -27,12 +25,15 @@ class YoloWriter(BaseWriter):
             3. Write the images and labels.
         """
 
+        data = self.dataset.get_data(index="image").reset_index()
+        data["bbox"] = [[bbox.to_yolo() for bbox in bboxes] for bboxes in data.bbox]
+
         self._write_yaml()
 
-        for split in self.data.split.unique():
+        for split in data.split.unique():
             self._make_dirs(split)
 
-            split_data = self.data[self.data.split == split]
+            split_data = data[data.split == split]
             self._write_images_labels(split_data)
 
     def _write_yaml(self) -> None:
@@ -48,8 +49,8 @@ class YoloWriter(BaseWriter):
             "train": f"{self.dataset_dir}/images/train",
             "val": f"{self.dataset_dir}/images/val",
             "test": f"{self.dataset_dir}/images/test",
-            "nc": self.n_classes,
-            "names": ", ".join(self.class_names),
+            "nc": self.dataset.n_categories,
+            "names": ", ".join(self.dataset.category_names),
         }
 
         with open(os.path.join(self.dataset_dir, "dataset.yaml"), "w") as outfile:
@@ -79,7 +80,7 @@ class YoloWriter(BaseWriter):
             in_file = row.image_path.values[0]
             out_file = self._get_filename(row, "images")
 
-            shutil.copyfile(in_file, out_file)
+            self.do_move_or_copy_image(in_file=in_file, out_file=out_file)
 
             # Labels
             out_file = self._get_filename(row, "labels")

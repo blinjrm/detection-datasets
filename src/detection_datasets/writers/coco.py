@@ -1,6 +1,5 @@
 import json
 import os
-import shutil
 from typing import Any, Dict, List
 
 from detection_datasets.writers import BaseWriter
@@ -29,7 +28,7 @@ class CocoWriter(BaseWriter):
     def _write_annotations(self) -> None:
         os.makedirs(os.path.join(self.dataset_dir, "annotations"))
 
-        for split in self.data.split.unique():
+        for split in self.dataset.splits:
             instances = {
                 "info": {"description": self.name},
                 "licences": [],
@@ -43,7 +42,7 @@ class CocoWriter(BaseWriter):
                 json.dump(instances, file)
 
     def _get_images(self) -> List[Dict[str, Any]]:
-        data = self.dataset.get_data(index="image").copy().reset_index()
+        data = self.dataset.get_data(index="image").reset_index()
         result = []
 
         for i in range(len(data)):
@@ -59,7 +58,7 @@ class CocoWriter(BaseWriter):
         return result
 
     def _get_annotations(self) -> List[Dict[str, Any]]:
-        data = self.dataset.get_data(index="bbox").copy().reset_index()
+        data = self.dataset.get_data(index="bbox").reset_index()
         data["bbox"] = [bbox.to_coco() for bbox in data.bbox]
         result = []
 
@@ -92,9 +91,11 @@ class CocoWriter(BaseWriter):
         return result
 
     def _write_images(self) -> None:
-        for split in self.data.split.unique():
+        data = self.dataset.get_data(index="image").reset_index()
+
+        for split in self.dataset.splits:
             os.makedirs(os.path.join(self.dataset_dir, split))
-            split_data = self.data[self.data.split == split]
+            split_data = data[data.split == split]
 
             for _, row in split_data.iterrows():
                 row = row.to_frame().T
@@ -102,4 +103,4 @@ class CocoWriter(BaseWriter):
                 in_file = row.image_path.values[0]
                 out_file = os.path.join(self.dataset_dir, split, str(row["image_id"].values[0]) + ".jpg")
 
-                shutil.copyfile(in_file, out_file)
+                self.do_move_or_copy_image(in_file=in_file, out_file=out_file)
