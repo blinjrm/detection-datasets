@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
@@ -22,14 +23,8 @@ class BaseWriter(ABC):
         """
 
         self.dataset = dataset
-        self.data = dataset.set_format(index="image").reset_index()
+        self.dataset_dir = os.path.join(path, name)
         self.name = name
-        self.path = path
-        self.dataset_dir = os.path.join(self.path, self.name)
-        self.class_names = dataset.category_names
-        self.n_classes = dataset.n_categories
-        self.n_images = dataset.n_images
-        self.split_proportions = dataset.split_proportions
 
         if move_or_copy_images.lower() in ["move", "copy"]:
             self.move_or_copy_images = move_or_copy_images
@@ -43,3 +38,16 @@ class BaseWriter(ABC):
 
         This method is specifc to each format, and need to be implemented in the writer class.
         """
+
+    def do_move_or_copy_image(self, in_file: str, out_file: str) -> None:
+        """Move or copy an image.
+
+        Args:
+            in_file: Path to the existing image file.
+            out_file: Directory where the image will be added.
+        """
+
+        if self.move_or_copy_images == "move":
+            shutil.move(in_file, out_file)
+        else:
+            shutil.copyfile(in_file, out_file)

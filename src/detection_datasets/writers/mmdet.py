@@ -1,6 +1,5 @@
 import json
 import os
-import shutil
 from typing import Dict, List
 
 import pandas as pd
@@ -16,7 +15,6 @@ class MmdetWriter(BaseWriter):
         """Initialize the YoloWriter."""
 
         super().__init__(**kwargs)
-        self.data["bbox"] = [[bbox.to_voc() for bbox in bboxes] for bboxes in self.data.bbox]
 
     def write(self) -> None:
         """Write the dataset to disk.
@@ -28,10 +26,13 @@ class MmdetWriter(BaseWriter):
             4. Write the images to disk for each split.
         """
 
-        for split in self.data.split.unique():
+        data = self.dataset.get_data(index="image").reset_index()
+        data["bbox"] = [[bbox.to_voc() for bbox in bboxes] for bboxes in data.bbox]
+
+        for split in self.dataset.splits:
             os.makedirs(os.path.join(self.dataset_dir, split, "images"))
 
-            split_data = self.data[self.data.split == split]
+            split_data = data[data.split == split]
             dataset = self._make_mmdet_data(split_data)
             self._save_dataset(dataset, split)
 
@@ -74,4 +75,4 @@ class MmdetWriter(BaseWriter):
         for mmdet_data_image, original_image_path in zip(mmdet_data, source_images):
             out_file = os.path.join(self.dataset_dir, split, "images", mmdet_data_image["filename"])
 
-            shutil.copyfile(original_image_path, out_file)
+            self.do_move_or_copy_image(in_file=original_image_path, out_file=out_file)
