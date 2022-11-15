@@ -11,10 +11,10 @@ def get_temp_dir() -> str:
         The path to the library's temp directory.
     """
 
-    TEMP_DIR = Path.home() / CACHE_DIR
-    TEMP_DIR.mkdir(parents=True, exist_ok=True)
+    temp_dir = Path.home() / CACHE_DIR
+    temp_dir.mkdir(parents=True, exist_ok=True)
 
-    return TEMP_DIR
+    return temp_dir
 
 
 def clear_temp_dir() -> None:
@@ -25,6 +25,6 @@ def clear_temp_dir() -> None:
     directories.
     """
 
-    TEMP_DIR = get_temp_dir()
-    shutil.rmtree(TEMP_DIR)
-    print(f"Temporary directory {TEMP_DIR} has been cleared.")
+    temp_dir = get_temp_dir()
+    shutil.rmtree(temp_dir)
+    print(f"Temporary directory {temp_dir} has been cleared.")

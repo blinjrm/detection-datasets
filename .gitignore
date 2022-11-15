@@ -36,3 +36,6 @@ wandb/
 
 # MkDocs documentation
 site/
+
+# Ruff
+.ruff_cache/
