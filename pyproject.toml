@@ -31,10 +31,10 @@ optional = true
 
 [tool.poetry.group.lint.dependencies]
 black = "^22.8.0"
-isort = "^5.10.1"
 pre-commit = "^2.20.0"
 mypy = "^0.971"
 pytest-cov = "^3.0.0"
+ruff = "^0.0.120"
 
 [tool.poetry.group.docs]
 optional = true
@@ -49,10 +49,52 @@ mkdocs-jupyter = "^0.21.0"
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.isort]
-profile = "black"
-line_length = 120
-
 [tool.black]
 line_length = 120
 target-version = ['py37']
+
+[tool.ruff]
+line-length = 120
+src = ['src']
+target-version = "py37"
+select = [
+    'A', # flake8-builtins
+    # "ANN", # flake8-annotations
+    'B', # flake8-bugbear
+    'C', # flake8-comprehensions
+    'D', # pydocstyle
+    "E", # pycodestyle errors
+    "F", # pyflakes
+    'I', # isort
+    'M',
+    'N', # pep8-naming
+    'Q', # flake8-quotes
+    'S', # flake8-bandit
+    'T', # flake8-print
+    'U', # pyupgrade
+    "W", # pycodestyle warnings
+]
+extend-ignore = [
+    'A003',
+    'ANN101',
+    'D100',
+    'D101',
+    'D102',
+    'D105',
+    'D107',
+    'D202',
+    "D203",
+    "D204",
+    "D213",
+    "D215",
+    "D400",
+    "D404",
+    "D406",
+    "D407",
+    "D408",
+    "D409",
+    "D413",
+    'F401',
+    'S101',
+    'T201',
+]
