@@ -6,16 +6,7 @@ from typing import Iterable
 
 import numpy as np
 import pandas as pd
-from datasets import (
-    ClassLabel,
-    Dataset,
-    DatasetDict,
-    Features,
-    Image,
-    Sequence,
-    Value,
-    load_dataset,
-)
+from datasets import ClassLabel, Dataset, DatasetDict, Features, Image, Sequence, Value, load_dataset
 from PIL import Image as PILImage
 
 from detection_datasets.bbox import Bbox
