@@ -9,8 +9,7 @@
 <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/-Python 3.7-blue?style=flat-square&logo=python&logoColor=white"></a>
 <a href="https://black.readthedocs.io/en/stable/"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-black.svg?style=flat-square&labelColor=gray"></a>
 <a href="https://github.com/blinjrm/detection-datasets/actions/workflows/ci.yaml"><img src="https://img.shields.io/github/actions/workflow/status/blinjrm/detection-datasets/ci.yaml?style=flat-square&label=CI"/></a>
-<a href="https://github.com/blinjrm/detection-datasets/actions/workflows/pypi.yaml"><img src="https://img.shields.io/github/actions/workflow/status/blinjrm/detection-datasets/pypi.yaml?style=flat-square&label=Build
-"/></a>
+<a href="https://github.com/blinjrm/detection-datasets/actions/workflows/pypi.yaml"><img src="https://img.shields.io/github/actions/workflow/status/blinjrm/detection-datasets/pypi.yaml?style=flat-square&label=Build"/></a>
 <a href="https://pypi.org/project/detection-datasets/"><img src="https://img.shields.io/pypi/status/detection-datasets?style=flat-square"/></a>
 
 <br>
