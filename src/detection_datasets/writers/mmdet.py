@@ -8,7 +8,6 @@ from detection_datasets.writers import BaseWriter
 
 
 class MmdetWriter(BaseWriter):
-
     format = "mmdet"
 
     def __init__(self, **kwargs) -> None:
@@ -37,7 +36,6 @@ class MmdetWriter(BaseWriter):
             self._save_dataset(dataset, split)
 
     def _make_mmdet_data(self, data_split: pd.DataFrame):
-
         mmdet_data = []
         source_images = []
 

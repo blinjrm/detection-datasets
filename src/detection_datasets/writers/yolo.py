@@ -37,7 +37,7 @@ class YoloWriter(BaseWriter):
             self._write_images_labels(split_data)
 
     def _write_yaml(self) -> None:
-        """Writes the YAML file for the dataset.
+        """Write the YAML file for the dataset.
 
         In the YOLO format, this file contains the path to the images, the names of the classes, and the number of
         classes.

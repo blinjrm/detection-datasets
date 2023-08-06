@@ -18,7 +18,6 @@ from detection_datasets.utils.visualization import show_image_bbox
 
 
 class DetectionDataset:
-
     COLUMNS = [
         "image_id",
         "image_path",
@@ -228,6 +227,7 @@ class DetectionDataset:
         Args:
             dataset_name: name of the dataset inside the user/organisation's repository.
             repo_name: user of organisation to push the dataset to.
+            **kwargs: keyword arguments specific to the DatasetDict.push_to_hub() method.
 
         Returns:
             The DetectionDataset instance. This allows for method cascading.
@@ -365,7 +365,7 @@ class DetectionDataset:
         return self._data.copy()
 
     def _data_by_image(self) -> pd.DataFrame:
-        """Returns the data grouped by image.
+        """Return the data grouped by image.
 
         Returns:
             A DataFrame grouped by image, meaning that each may contain data related to multiple bboxes.
@@ -389,7 +389,7 @@ class DetectionDataset:
         self._format = "image"
 
     def _data_by_bbox(self) -> pd.DataFrame:
-        """Converts a DataFrame arranged by image to a DataFrame arranged by bbox.
+        """Convert a DataFrame arranged by image to a DataFrame arranged by bbox.
 
         This method reverses the effect of calling self._data_by_image().
 
@@ -461,7 +461,7 @@ class DetectionDataset:
         return self
 
     def split(self, splits: Iterable[float]) -> DetectionDataset:
-        """Splits the dataset into train, val and test.
+        """Split the dataset into train, val and test.
 
         Args:
             splits: Iterable containing the proportion of images to include in the train, val and test splits.
@@ -495,7 +495,7 @@ class DetectionDataset:
         return self
 
     def map_categories(self, mapping: dict[str, str]) -> DetectionDataset:
-        """Maps the categories to the new categories.
+        """Map the categories to the new categories.
 
         The new categoy names replace the existing ones.
         Annotations with categories not present in the mapping are dropped.
@@ -547,7 +547,7 @@ class DetectionDataset:
 
     @property
     def n_images(self) -> int:
-        """Returns the number of images in the dataset.
+        """Return the number of images in the dataset.
 
         Returns:
             The number of images in the dataset.
@@ -559,7 +559,7 @@ class DetectionDataset:
 
     @property
     def n_bbox(self) -> int:
-        """Returns the number of images in the dataset.
+        """Return the number of images in the dataset.
 
         Returns:
             The number of images in the dataset.
@@ -571,7 +571,7 @@ class DetectionDataset:
 
     @property
     def splits(self) -> list[str]:
-        """Returns the splits of the dataset.
+        """Return the splits of the dataset.
 
         Returns:
             The splits present in the dataset.
@@ -581,7 +581,7 @@ class DetectionDataset:
 
     @property
     def split_proportions(self) -> pd.DataFrame:
-        """Returns the proportion of images in the train, val and test splits.
+        """Return the proportion of images in the train, val and test splits.
 
         Returns:
             The proportion of images in the train, val and test splits.
@@ -593,7 +593,7 @@ class DetectionDataset:
 
     @property
     def categories(self) -> pd.DataFrame:
-        """Creates a DataFrame containing the categories found in the data with their id.
+        """Create a DataFrame containing the categories found in the data with their id.
 
         Returns:
             A dataframe containing the categories with the category_id as index.
