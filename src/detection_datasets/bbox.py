@@ -56,7 +56,7 @@ class Bbox:
         return bbox
 
     def _validate_bbox(self) -> None:
-        """Asserts that the bbox to the correct size."""
+        """Assert that the bbox to the correct size."""
 
         assert self.bbox[2] >= self.bbox[0] and self.bbox[3] >= self.bbox[1], "bbox must be a rectangle"
 

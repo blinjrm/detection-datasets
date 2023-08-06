@@ -8,13 +8,14 @@
 
 <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/-Python 3.7-blue?style=flat-square&logo=python&logoColor=white"></a>
 <a href="https://black.readthedocs.io/en/stable/"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-black.svg?style=flat-square&labelColor=gray"></a>
-<a href="https://github.com/blinjrm/detection-datasets/actions/workflows/ci.yaml"><img src="https://img.shields.io/github/workflow/status/blinjrm/detection-datasets/CI?label=CI&style=flat-square"/></a>
-<a href="https://github.com/blinjrm/detection-datasets/actions/workflows/pypi.yaml"><img src="https://img.shields.io/github/workflow/status/blinjrm/detection-datasets/Python%20package?label=Build&style=flat-square"/></a>
+<a href="https://github.com/blinjrm/detection-datasets/actions/workflows/ci.yaml"><img src="https://img.shields.io/github/actions/workflow/status/blinjrm/detection-datasets/ci.yaml?style=flat-square&label=CI"/></a>
+<a href="https://github.com/blinjrm/detection-datasets/actions/workflows/pypi.yaml"><img src="https://img.shields.io/github/actions/workflow/status/blinjrm/detection-datasets/pypi.yaml?style=flat-square&label=Build
+"/></a>
 <a href="https://pypi.org/project/detection-datasets/"><img src="https://img.shields.io/pypi/status/detection-datasets?style=flat-square"/></a>
 
 <br>
 
-*Easily load and transform datasets for object detection.*
+_Easily load and transform datasets for object detection._
 
 </div>
 <br>
@@ -31,22 +32,23 @@
 
 <br>
 
-`detection_datasets` aims to make it easier to work with detection datasets.  
+`detection_datasets` aims to make it easier to work with detection datasets.
 
-This library works alongside the [Detection dataset](https://huggingface.co/detection-datasets) organisation on the 🤗 Hub, where some detection datasets have been uploaded in the format expected by the library, and are ready to use.  
+This library works alongside the [Detection dataset](https://huggingface.co/detection-datasets) organisation on the 🤗 Hub, where some detection datasets have been uploaded in the format expected by the library, and are ready to use.
 
 The main features are:
-* **Read** the dataset :
-    * From disk if it has already been downloaded.
-    * Directly from the Hugging Face Hub if it [already exist](https://huggingface.co/detection-datasets).
-* **Transform** the dataset:
-    * Select a subset of data.
-    * Remap categories.
-    * Create new train-val-test splits.
-* **Visualize** the annotations and images.
-* **Write** the dataset:
-    * To disk, selecting the target detection format: `COCO`, `YOLO` and more to come.
-    * To the Hugging Face Hub for easy reuse in a different environment and share with the community.
+
+- **Read** the dataset :
+  - From disk if it has already been downloaded.
+  - Directly from the Hugging Face Hub if it [already exist](https://huggingface.co/detection-datasets).
+- **Transform** the dataset:
+  - Select a subset of data.
+  - Remap categories.
+  - Create new train-val-test splits.
+- **Visualize** the annotations and images.
+- **Write** the dataset:
+  - To disk, selecting the target detection format: `COCO`, `YOLO` and more to come.
+  - To the Hugging Face Hub for easy reuse in a different environment and share with the community.
 
 <br>
 
@@ -54,12 +56,12 @@ The main features are:
 
 ---
 
-*Read the quick start bellow, or directly jump to the tutorials:*
+_Read the quick start bellow, or directly jump to the tutorials:_
 
-| Goal                                 | Tutorial | Colab |
-|--------------------------------------|:--------:|:-----:|
-| Load from disk and upload to the Hub | [Open in the docs](https://blinjrm.github.io/detection-datasets/tutorials/1_Read/)     | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/blinjrm/detection-datasets/blob/main/docs/tutorials/1_Read.ipynb)      |
-| Load from the Hub and transform          | [Open in the docs](https://blinjrm.github.io/detection-datasets/tutorials/2_Transform/)     | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/blinjrm/detection-datasets/blob/main/docs/tutorials/2_Transform.ipynb)      |
+| Goal                                 |                                        Tutorial                                         |                                                                                            Colab                                                                                             |
+| ------------------------------------ | :-------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| Load from disk and upload to the Hub |   [Open in the docs](https://blinjrm.github.io/detection-datasets/tutorials/1_Read/)    |   [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/blinjrm/detection-datasets/blob/main/docs/tutorials/1_Read.ipynb)    |
+| Load from the Hub and transform      | [Open in the docs](https://blinjrm.github.io/detection-datasets/tutorials/2_Transform/) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/blinjrm/detection-datasets/blob/main/docs/tutorials/2_Transform.ipynb) |
 
 ---
 
@@ -77,7 +79,7 @@ Python 3.7+
 
 `detection_datasets` is upon the great work of:
 
-- [Pandas](https://pandas.pydata.org) for manipulating data.  
+- [Pandas](https://pandas.pydata.org) for manipulating data.
 - [Hugging Face Datasets](https://huggingface.co/docs/datasets/index) to store and load datasets from the Hub.
 
 ### Installation
@@ -120,15 +122,17 @@ The `detection_dataset` library works alongside the [Detection dataset](https://
 ```Python
 dd = DetectionDataset().from_hub(name='fashionpedia')
 ```
-Currently supported format for reading datasets are:  
-- COCO  
-- *more to come*  
+
+Currently supported format for reading datasets are:
+
+- COCO
+- _more to come_
 
 The list of datasets available from the Hub is given by:
 
 ```Python
 # Search in the "detection-datasets" repository on the Hub.
-DetectionDataset().available_in_hub()  
+DetectionDataset().available_in_hub()
 
 # Search in another repository on the Hub.
 DetectionDataset().available_in_hub(repo_name=MY_REPO_OR_ORGANISATION)
@@ -165,7 +169,6 @@ dd = DetectionDataset()\
 ## 3. Visualize
 
 The `DetectionDataset` objects contains several properties to analyze your data:
-
 
 ```Python
 dd.data                     # This is equivlent to calling `dd.get_data('image')`,
@@ -214,11 +217,12 @@ dd.to_disk(
 )
 ```
 
-Currently supported format for writing datasets are:  
-- YOLO  
+Currently supported format for writing datasets are:
+
+- YOLO
 - COCO
-- MMDET  
-- *more to come*  
+- MMDET
+- _more to come_
 
 ### To the Hugging Face Hub
 
@@ -230,6 +234,7 @@ dd.to_hub(
     repo_name='MY_REPO_OR_ORGANISATION'
 )
 ```
+
 The dataset viewer on the Hub will work out of the box, and we encourage you to update the README in your new repo to make it easier for the comminuty to use the dataset.
 
 <div align="center">

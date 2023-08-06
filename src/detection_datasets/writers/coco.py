@@ -6,7 +6,6 @@ from detection_datasets.writers import BaseWriter
 
 
 class CocoWriter(BaseWriter):
-
     format = "coco"
 
     def __init__(self, **kwargs) -> None:
