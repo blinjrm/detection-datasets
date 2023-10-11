@@ -74,7 +74,7 @@ _Read the quick start bellow, or directly jump to the tutorials:_
 
 ### Requirements
 
-Python 3.7+
+Python 3.8.1+
 
 `detection_datasets` is upon the great work of:
 
