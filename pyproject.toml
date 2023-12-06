@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "detection_datasets"
-version = "0.3.7"
+version = "0.3.8"
 description = "Easily load and transform datasets for object detection"
 authors = ["Jerome Blin <blinjrm@gmail.com>"]
 license = "MIT"
@@ -78,9 +78,11 @@ select = [
 extend-ignore = [
   'A003',
   'ANN101',
+  'B023',
   'D100',
   'D101',
   'D102',
+  'D104',
   'D105',
   'D107',
   'D202',
@@ -89,6 +91,7 @@ extend-ignore = [
   "D213",
   "D215",
   "D400",
+  'D401',
   "D404",
   "D406",
   "D407",
